@@ -1,0 +1,214 @@
+.task-info-container {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.line {
+  height: 100%;
+  margin-left: 60px;
+  margin-right: 20px;
+  width: 19px;
+  background: linear-gradient(180deg, rgba(11, 87, 208, 0.7) 0%, rgba(45, 45, 45, 0.7) 39.42%);
+}
+
+.line.on-review {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.line.on-work {
+  background: linear-gradient(180deg, rgba(11, 87, 208, 0.7) 26.44%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.line.completed {
+  background: linear-gradient(180deg, rgba(24, 128, 56, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.line.to-execution {
+  background: linear-gradient(180deg, rgba(232, 232, 235, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.line.stopped {
+  background: linear-gradient(180deg, rgba(52, 171, 208, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.line.closed {
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.task-title-container {
+  border-bottom: 2px solid #0B57D0;
+  padding-bottom: 16px;
+  padding-top: 30px;
+  margin-bottom: 41px;
+}
+
+.task-title {
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1.4;
+  margin: 0 0 16px 0;
+  color: #2D2D2D;
+}
+
+.meta-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.created-at {
+  color: rgba(45, 45, 45, 0.6);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.project-link {
+  color: rgba(11, 87, 208, 0.5);
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.line-container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  flex: 1;
+}
+
+.task-info {
+  padding: 0 36px;
+  flex: 1;
+}
+
+.main-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 45px;
+}
+
+.status-section,
+.deadline-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #2D2D2D;
+}
+
+.status-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.status-badge {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.dropdown-arrow {
+  color: #666;
+  font-size: 12px;
+}
+
+.deadline-date {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.divider {
+  height: 1px;
+  background: #E0E0E0;
+  margin: 24px 0;
+}
+
+.description-section {
+  padding-bottom: 50px;
+  margin-top: 13px;
+  border-bottom: 2px solid #0B57D0;
+}
+
+.section-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #2D2D2D;
+  margin: 0 0 16px 0;
+}
+
+.description-text {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #2D2D2D;
+}
+
+.description-line {
+  margin: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bullet {
+  color: #0B57D0;
+  font-weight: bold;
+  min-width: 16px;
+}
+
+.manager-section {
+  margin-bottom: 24px;
+}
+
+.manager-header {
+  margin-bottom: 12px;
+}
+
+.manager-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #2D2D2D;
+}
+
+.manager-comment {
+  background: #F8F9FA;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #0B57D0;
+  margin-bottom: 16px;
+}
+
+.manager-comment p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2D2D2D;
+}
+
+.add-comment-btn {
+  background: #0B57D0;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-comment-btn:hover {
+  background: #094BAC;
+}

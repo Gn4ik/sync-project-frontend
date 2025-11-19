@@ -1,0 +1,42 @@
+.popup {
+    position: absolute;
+    top: 100%;
+    margin-top: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #D1D2D3;
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.popup.right {
+    right: 0;
+}
+
+.popup.left {
+    left: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .popup {
+        min-width: 280px;
+    }
+    
+    .popup.right {
+        right: -20px;
+    }
+}

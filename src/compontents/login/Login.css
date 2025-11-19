@@ -1,0 +1,122 @@
+.background {
+    background-color: #DFE7F3;
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 1070px;
+  max-height: 665.62px;
+  background: white;
+  border-radius: 20px;
+  padding: 60px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: center;
+}
+
+.sync-text {
+    text-align: left;
+}
+
+.sync-bold {
+  font-weight: 700;
+  font-size: 96px;
+  font-weight: bold;
+  line-height: 1.2;
+  display: block;
+  margin-bottom: 30px;
+  margin-left: 12px;
+}
+
+.sync-regular {
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1.4;
+  display: block;
+  margin-left: 12px;
+}
+
+.sync-regular:last-of-type {
+  margin-bottom: 18px;
+}
+
+.login-form-container {
+  flex: 1;
+  background: white;
+  padding: 40px;
+  display: flex;
+  max-width: 394px;
+  max-height: 420px;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.login-title {
+  font-weight: 600;
+  font-size: 36px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e1e1e1;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-input::placeholder {
+  color: #999;
+}
+
+.login-button {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  margin-top: 20px;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
