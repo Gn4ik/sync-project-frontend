@@ -68,15 +68,17 @@
   overflow: hidden;
 }
 
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .login-title {
   font-weight: 600;
   font-size: 36px;
   margin-bottom: 40px;
   text-align: center;
-}
-
-.form-group {
-  margin-bottom: 24px;
 }
 
 .form-input {

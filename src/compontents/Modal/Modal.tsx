@@ -14,7 +14,9 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
     project: '',
     assignee: '',
     deadline: '',
-    description: ''
+    description: '',
+    link: '',
+    version: ''
   });
 
   const modalTitles = {
@@ -35,7 +37,9 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
       project: '',
       assignee: '',
       deadline: '',
-      description: ''
+      description: '',
+      link: '',
+      version: ''
     });
   };
 
@@ -90,10 +94,38 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
                     <option value="" disabled hidden>
                       {type === 'task' ? 'Выберите проект' : 'Выберите релиз'}
                     </option>
-                    <option value="project1" className='form-text'>Проект 1</option>
-                    <option value="project2" className='form-text'>Проект 2</option>
-                    <option value="project3" className='form-text'>Проект 3</option>
+                    <option value="project1" className='form-text'>data1</option>
+                    <option value="project2" className='form-text'>data2</option>
+                    <option value="project3" className='form-text'>data3</option>
                   </select>
+                </div>
+              )}
+
+              {type === "project" && (
+                <div className="form-group">
+                  <label className="form-label">Ссылка:</label>
+                  <input
+                    type="text"
+                    className="form-input form-text"
+                    placeholder={`Введите ссылку на проект`}
+                    value={formData.link}
+                    onChange={(e) => handleChange('link', e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {type === "release" && (
+                <div className="form-group">
+                  <label className="form-label">Версия:</label>
+                  <input
+                    type="text"
+                    className="form-input form-text"
+                    placeholder={`Введите версию`}
+                    value={formData.version}
+                    onChange={(e) => handleChange('version', e.target.value)}
+                    required
+                  />
                 </div>
               )}
 

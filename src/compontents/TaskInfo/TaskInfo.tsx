@@ -70,7 +70,7 @@ const TaskInfo = ({ selectedTask }: TaskInfoProps) => {
 
               <div className='manager-section'>
                 <div className='manager-header'>
-                  <span className='manager-name'>Менеджер</span>
+                  <span className='manager-name'></span>
                 </div>
                 <div className='manager-comment'>
                 </div>

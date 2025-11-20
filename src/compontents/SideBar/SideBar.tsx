@@ -155,20 +155,6 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
       position: 'Глава отдела',
       department: 'Управление',
       isOnline: true
-    },
-    {
-      id: '6',
-      name: 'Пьер Дун',
-      position: 'Мастер прокрастинации',
-      department: 'Генеральный директор',
-      isOnline: true
-    },
-    {
-      id: '100',
-      name: 'Препод',
-      position: 'Заказчик',
-      department: 'Лобач',
-      isOnline: true
     }
   ];
 

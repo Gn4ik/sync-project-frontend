@@ -1,23 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
 
 body * {
-    /* border: 1px red solid; */
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: 0;
-    color: #2D2D2D;
+  /* border: 1px red solid; */
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #2D2D2D;
 }
 
 .container-row {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 50px);
 }
 
 .gradient {
-    background: linear-gradient(135deg, #0B57D0 0%, #2D2E30 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
+  background: linear-gradient(135deg, #0B57D0 0%, #2D2E30 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
