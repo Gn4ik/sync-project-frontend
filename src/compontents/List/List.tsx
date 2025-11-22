@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './List.css';
 import { ListNode, ListProps } from '../types/types';
 
@@ -12,10 +12,43 @@ const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode =>
   };
 };
 
+const preserveExpansionState = (oldItems: ListNode[], newItems: ListNode[]): ListNode[] => {
+  const expansionMap = new Map<string, boolean>();
+
+  const collectExpansionState = (items: ListNode[]) => {
+    items.forEach(item => {
+      expansionMap.set(item.id, item.isExpanded ?? false);
+      if (item.children) {
+        collectExpansionState(item.children);
+      }
+    });
+  };
+
+  collectExpansionState(oldItems);
+
+  const applyExpansionState = (items: ListNode[]): ListNode[] => {
+    return items.map(item => {
+      const isExpanded = expansionMap.get(item.id) ?? item.isExpanded ?? false;
+      return {
+        ...item,
+        isExpanded,
+        children: item.children ? applyExpansionState(item.children) : undefined
+      };
+    });
+  };
+
+  return applyExpansionState(newItems);
+};
+
+interface ListPropsWithInfo extends ListProps {
+  onInfoClick?: (item: ListNode) => void;
+}
+
 const List = ({
   items,
   onItemClick,
   onItemToggle,
+  onInfoClick,
   showIcons = true,
   expandIcon = '❯',
   collapseIcon = '❯',
@@ -25,11 +58,19 @@ const List = ({
   style,
   renderItem,
   defaultExpanded = false
-}: ListProps) => {
+}: ListPropsWithInfo) => {
   const [treeItems, setTreeItems] = useState<ListNode[]>(() =>
     items.map(item => initializeItemExpansion(item, defaultExpanded))
   );
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTreeItems(prevItems =>
+      preserveExpansionState(prevItems, items.map(item =>
+        initializeItemExpansion(item, defaultExpanded)
+      ))
+    );
+  }, [items, defaultExpanded]);
 
   const toggleExpand = (id: string) => {
     setTreeItems(prevItems =>
@@ -66,11 +107,29 @@ const List = ({
     onItemClick?.(item);
   };
 
+  const handleInfoClick = (e: React.MouseEvent, item: ListNode) => {
+    e.stopPropagation();
+    onInfoClick?.(item);
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}.${month}.${year}`;
+  };
+
   const renderTreeNode = (item: ListNode, level: number = 0, isRoot: boolean = true): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0;
     const canExpand = hasChildren && level < maxLevel;
     const isActive = item.id === activeItemId;
     const isExpandedRoot = isRoot && item.isExpanded && hasChildren;
+    const showInfoButton = (item.type === 'release' || item.type === 'project') && item.isExpanded;
+    const isTask = item.type === 'task';
 
     if (renderItem) {
       return renderItem(item, level);
@@ -95,7 +154,7 @@ const List = ({
         >
           <div className="tree-item-content">
             {level === 2 && item.color && (
-              <span 
+              <span
                 className="task-color-marker"
                 style={{ backgroundColor: item.color }}
               />
@@ -111,14 +170,31 @@ const List = ({
               </span>
             )}
 
-            {showIcons && !canExpand && level != 2 &&(
+            {showIcons && !canExpand && level != 2 && (
               <span className="expand-placeholder"></span>
             )}
 
-            <span className="item-title">{item.title}</span>
+            <div className="item-content-wrapper">
+              <span className="item-title">{item.title}</span>
+              {isTask && item.deadline && (
+                <span className="task-deadline">
+                  {formatDate(item.deadline)}
+                </span>
+              )}
+            </div>
 
             {item.badge && (
               <span className="item-badge">{item.badge}</span>
+            )}
+
+            {showInfoButton && (
+              <button
+                className="info-button"
+                onClick={(e) => handleInfoClick(e, item)}
+                title="Просмотреть информацию"
+              >
+                ℹ
+              </button>
             )}
           </div>
         </div>

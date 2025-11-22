@@ -61,6 +61,12 @@
 	color: #2D2D2D80;
 }
 
+.popup-item.active {
+	background-color: #e3f2fd;
+	color: #1976d2;
+	font-weight: 600;
+}
+
 .popup-item:hover {
 	background-color: #CADAF3;
 	color: #2D2D2D;

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap&subset=cyrillic');
 
 body * {
   /* border: 1px red solid; */
@@ -21,4 +21,60 @@ body * {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+}
+
+.line {
+  height: (100vh - 50px);
+  position: relative;
+  margin-left: 60px;
+  margin-right: 20px;
+  width: 19px;
+  background: var(--status-gradient);
+}
+
+.line-container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  flex: 1;
+}
+
+.status-primary {
+  --status-gradient: linear-gradient(180deg, rgba(11, 87, 208, 0.7) 0%, rgba(45, 45, 45, 0.7) 39.42%);
+}
+
+.status-on-review {
+  --status-color: #f59e0b;
+  --status-bg: rgba(245, 158, 11, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(245, 158, 11, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.status-on-work {
+  --status-color: #0b57d0;
+  --status-bg: rgba(11, 87, 208, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(11, 87, 208, 0.7) 26.44%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.status-completed {
+  --status-color: #188038;
+  --status-bg: rgba(24, 128, 56, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(24, 128, 56, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.status-to-execution {
+  --status-color: #e8e8eb;
+  --status-bg: rgba(232, 232, 235, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(232, 232, 235, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.status-stopped {
+  --status-color: #34abd0;
+  --status-bg: rgba(52, 171, 208, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(52, 171, 208, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
+}
+
+.status-closed {
+  --status-color: #dc2626;
+  --status-bg: rgba(220, 38, 38, 0.1);
+  --status-gradient: linear-gradient(180deg, rgba(220, 38, 38, 0.7) 21.63%, rgba(11, 87, 208, 0.7) 64.42%, rgba(45, 45, 45, 0.7) 100%);
 }

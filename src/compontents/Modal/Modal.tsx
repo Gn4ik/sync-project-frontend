@@ -1,29 +1,92 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './Modal.css';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (formData: any) => void;
-  type: 'release' | 'project' | 'task';
+  type: 'release' | 'project' | 'task' | 'meeting';
+  mode?: 'create' | 'edit';
+  initialData?: any;
 }
 
-const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    project: '',
-    assignee: '',
-    deadline: '',
-    description: '',
-    link: '',
-    version: ''
+const mockColleagues = [
+  { id: '1', name: 'Артем Evil', position: 'Backend-разработчик' },
+  { id: '2', name: 'Gn4ik', position: 'Frontend-разработчик' },
+  { id: '3', name: 'Ksu Vedernikova', position: 'Технический писатель' },
+  { id: '4', name: 'Полина Сидорина', position: 'Дизайнер' },
+  { id: '5', name: 'Иван Садиков', position: 'Глава отдела' }
+];
+
+const Modal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  type,
+  mode = 'create',
+  initialData
+}: ModalProps) => {
+
+  const [formData, setFormData] = useState(() => {
+    if (mode === 'edit' && initialData) {
+      return {
+        title: initialData.title || '',
+        description: initialData.description || '',
+        deadline: initialData.deadline || '',
+        link: initialData.link || '',
+        version: initialData.version || '',
+        participants: [] as string[],
+        meetingDate: '',
+        meetingTime: ''
+      };
+    }
+    return {
+      title: '',
+      project: '',
+      assignee: '',
+      deadline: '',
+      description: '',
+      link: '',
+      version: '',
+      participants: [] as string[],
+      meetingDate: '',
+      meetingTime: ''
+    };
   });
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const modalTitles = {
-    release: 'Создать релиз',
-    project: 'Создать проект',
-    task: 'Создать задачу'
+    release: mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз',
+    project: mode === 'edit' ? 'Редактировать проект' : 'Создать проект',
+    task: mode === 'edit' ? 'Редактировать задачу' : 'Создать задачу',
+    meeting: mode === 'edit' ? 'Редактировать встречу' : 'Создать встречу'
   };
+
+  const filteredColleagues = mockColleagues.filter(colleague =>
+    colleague.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    colleague.position.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +102,12 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
       deadline: '',
       description: '',
       link: '',
-      version: ''
+      version: '',
+      participants: [],
+      meetingDate: '',
+      meetingTime: ''
     });
+    setSearchTerm('');
   };
 
   const handleChange = (field: string, value: string) => {
@@ -50,36 +117,151 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
     }));
   };
 
+  const handleParticipantToggle = (colleagueId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      participants: prev.participants.includes(colleagueId)
+        ? prev.participants.filter(id => id !== colleagueId)
+        : [...prev.participants, colleagueId]
+    }));
+  };
+
+  const getSelectedParticipantsNames = () => {
+    return formData.participants.map(id =>
+      mockColleagues.find(c => c.id === id)?.name
+    ).filter(Boolean).join(', ');
+  };
+
+  const handleInputFocus = () => {
+    setShowDropdown(true);
+  };
+
+  const getInputDisplayValue = () => {
+    if (searchTerm) {
+      return searchTerm;
+    }
+    if (formData.participants.length > 0) {
+      return getSelectedParticipantsNames();
+    }
+    return '';
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    if (formData.participants.length > 0 && e.target.value) {
+      setFormData(prev => ({
+        ...prev,
+        participants: []
+      }));
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        {/* Заголовок */}
         <div className="modal-header">
           <h2 className="modal-title">{modalTitles[type]}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Основная форма */}
           <div className='form-wrapper'>
             <div className="form-section">
 
-              {/* Название */}
               <div className="form-group">
                 <label className="form-label">Название:</label>
                 <input
                   type="text"
                   className="form-input form-text"
-                  placeholder={`Введите название ${type === 'release' ? 'релиза' : type === 'project' ? 'проекта' : 'задачи'}`}
+                  placeholder={`Введите название ${type === 'release' ? 'релиза' : type === 'project' ? 'проекта' : type === 'meeting' ? 'встречи' : 'задачи'}`}
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   required
                 />
               </div>
 
-              {/* Для задач и проектов - выбор родительского элемента */}
+              {type === 'meeting' && (
+                <div className="form-group">
+                  <label className="form-label">Проект:</label>
+                  <select
+                    className="form-select form-text"
+                    value={formData.project}
+                    onChange={(e) => handleChange('project', e.target.value)}
+                    required
+                  >
+                    <option value="" disabled hidden>Выберите проект</option>
+                    <option value="project1" className='form-text'>Проект 1</option>
+                    <option value="project2" className='form-text'>Проект 2</option>
+                    <option value="project3" className='form-text'>Проект 3</option>
+                  </select>
+                </div>
+              )}
+
+              {type === 'meeting' && (
+                <div className="form-group">
+                  <label className="form-label">Участники:</label>
+                  <div className="participants-selector">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      className="form-input form-text"
+                      placeholder={formData.participants.length === 0 ? "Поиск сотрудников..." : ""}
+                      value={getInputDisplayValue()}
+                      onChange={handleInputChange}
+                      onFocus={handleInputFocus}
+                    />
+                    {showDropdown && (
+                      <div ref={dropdownRef} className="participants-dropdown">
+                        {filteredColleagues.map(colleague => (
+                          <div
+                            key={colleague.id}
+                            className={`participant-option ${formData.participants.includes(colleague.id) ? 'selected' : ''}`}
+                            onClick={() => handleParticipantToggle(colleague.id)}
+                          >
+                            <div className="participant-info">
+                              <div className="participant-name">{colleague.name}</div>
+                              <div className="participant-position">{colleague.position}</div>
+                            </div>
+                            <div className="participant-checkbox">
+                              {formData.participants.includes(colleague.id) ? '✓' : ''}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {formData.participants.length > 0 && (
+                      <div className="selected-participants">
+                        <div className="selected-participants-label">Выбрано: {getSelectedParticipantsNames()}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {type === 'meeting' && (
+                <div className="form-group">
+                  <label className="form-label">Дата и время:</label>
+                  <div className="datetime-inputs">
+                    <input
+                      type="date"
+                      className="form-input form-text"
+                      value={formData.meetingDate}
+                      onChange={(e) => handleChange('meetingDate', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="time"
+                      className="form-input form-text"
+                      value={formData.meetingTime}
+                      onChange={(e) => handleChange('meetingTime', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               {(type === 'task' || type === 'project') && (
                 <div className="form-group">
                   <label className="form-label">
@@ -129,7 +311,6 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
                 </div>
               )}
 
-              {/* Для задач - исполнитель */}
               {type === 'task' && (
                 <div className="form-group">
                   <label className="form-label">Исполнитель:</label>
@@ -147,24 +328,24 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
                 </div>
               )}
 
-              {/* Срок (для всех типов) */}
-              <div className="form-group">
-                <label className="form-label">Срок:</label>
-                <input
-                  type="date"
-                  className="form-input form-text"
-                  value={formData.deadline}
-                  onChange={(e) => handleChange('deadline', e.target.value)}
-                  required={type === 'task'}
-                />
-              </div>
+              {(type !== 'meeting') && (
+                <div className="form-group">
+                  <label className="form-label">Срок:</label>
+                  <input
+                    type="date"
+                    className="form-input form-text"
+                    value={formData.deadline}
+                    onChange={(e) => handleChange('deadline', e.target.value)}
+                    required={type === 'task'}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Описание */}
-            <div className="form-group-description ">
+            <div className="form-group-description">
               <label className="form-label description-label">Описание:</label>
               <textarea
-                className="form-textarea form-text "
+                className="form-textarea form-text"
                 placeholder="Введите описание"
                 rows={3}
                 value={formData.description}
@@ -173,14 +354,13 @@ const Modal = ({ isOpen, onClose, onSubmit, type }: ModalProps) => {
             </div>
           </div>
 
-          {/* Кнопки действий */}
           <div className="modal-actions">
             <div className="action-buttons">
               <button type="button" className="btn-secondary" onClick={onClose}>
                 Отменить
               </button>
               <button type="submit" className="btn-primary">
-                Добавить
+                {mode === 'edit' ? 'Сохранить' : 'Добавить'}
               </button>
             </div>
           </div>

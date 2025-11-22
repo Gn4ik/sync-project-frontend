@@ -170,3 +170,67 @@
   border: 1px solid black;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
 }
+
+.info-button {
+  background: none;
+  color: #0B57D0;
+  border: 2px solid #0B57D0;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.info-button:hover {
+  background-color: #0B57D0;
+  color: white;
+  opacity: 1;
+}
+
+.item-content-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.task-deadline {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 140%;
+  letter-spacing: 0%;
+  color: #0B57D0;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: auto;
+  align-self: flex-end;
+}
+
+.tree-item.active .task-deadline {
+  color: #0B57D0;
+}
+
+.tree-item.level-2 .item-title {
+  font-size: 16px;
+  color: #2D2D2D;
+  font-weight: normal;
+  line-height: 1.3;
+  white-space: normal;
+  word-wrap: break-word;
+  flex: 1;
+  min-width: 0;
+}

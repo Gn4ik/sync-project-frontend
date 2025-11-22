@@ -7,6 +7,13 @@ export type TaskStatus =
   | 'stopped'
   | 'closed';
 
+export type User = {
+  id: number;
+  enroll: string;
+  role: 'user' | 'manager' | 'admin';
+  name: string;
+}
+
 export type TaskItem = {
   id: string;
   title: string;
@@ -17,6 +24,7 @@ export type TaskItem = {
   createdDate: string;
   deadline: string;
   description: string;
+  canEdit?: boolean;
 }
 
 export type ReleaseItem = {
@@ -33,6 +41,7 @@ export type ProjectItem = {
   children?: TaskItem[];
   isExpanded?: boolean;
   isActive?: boolean;
+  description?: string;
 }
 
 export type TasksListProps = {
@@ -44,13 +53,20 @@ export type TaskInfoProps = {
   selectedTask?: TaskItem | null;
 }
 
-export type Colleague = {
+export interface Colleague {
   id: string;
   name: string;
   position: string;
-  department?: string;
+  department: string;
+  isOnline: boolean;
   avatar?: string;
-  isOnline?: boolean;
+  birthDate?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface ColleagueInfoProps {
+  selectedColleague: Colleague | null;
 }
 
 export type ColleagueListProps = {
@@ -69,6 +85,7 @@ export type ListNode = {
   badge?: string | number;
   data?: any;
   color?: string;
+  deadline?: string;
 }
 
 export type ListProps = {

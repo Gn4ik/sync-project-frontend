@@ -2,15 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Colleague, ReleaseItem, TaskItem } from '../types/types';
+import { Colleague, ListNode, ReleaseItem, TaskItem } from '../types/types';
 import ColleaguesList from '../ColleaguesList/ColleaguesList';
+import InfoModal from '../InfoModal/InfoModal';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
+  onColleagueSelect: (colleague: Colleague) => void;
 }
 
-const SideBar = ({ onTaskSelect }: SideBarProps) => {
+const SideBar = ({ onTaskSelect, onColleagueSelect }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
+  const [taskFilter, setTaskFilter] = useState<'all' | 'my'>('all');
+  const [currentUserId, setCurrentUserId] = useState(1);
+  const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
+    isOpen: false,
+    type: null,
+    data: null
+  });
+
+  // useEffect(() => {
+  //   const savedUserId = localStorage.getItem('currentUserId');
+  //   if (savedUserId) {
+  //     setCurrentUserId(savedUserId);
+  //   }
+  // }, []);
 
   const mockTasks: ReleaseItem[] = [
     {
@@ -22,6 +38,7 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
           id: '2',
           title: 'Проект 100',
           isExpanded: false,
+          description: `ЙУЦЙУЛЙЦОО ФЫВЫВФЫВФ ЧЯССЯС zzzzzzzzzzzzzzzzzzzzzzzzzz qqqqqqqqqqqqqqqqq aaaaaaaaaaaaaaaaaaaaaaaaa zzzzzzzzzzzzzzzzzzzzzzzzzz sssssssssssssssssssssssss`,
           children: [
             {
               id: '3',
@@ -57,7 +74,7 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
               id: '412421',
               title: 'Разработка формы авторизации для личного кабинета',
               isExpanded: false,
-              executor: 1,
+              executor: 2,
               status: 'closed',
               createdDate: '2025-11-11',
               deadline: '2025-12-01',
@@ -72,7 +89,7 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
               id: '65655',
               title: 'Разработка формы авторизации для личного кабинета',
               isExpanded: false,
-              executor: 1,
+              executor: 3,
               status: 'completed',
               createdDate: '2025-12-15',
               deadline: '2025-12-31',
@@ -81,7 +98,10 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
 Поле пароля с toggle видимости
 Чекбокс "Запомнить меня"
 Кнопку "Войти"
-Ссылки "Забыли пароль?" и "Регистрация"`
+Ссылки "Забыли пароль?" и "Регистрация"
+Поле пароля с toggle видимости
+Поле пароля с toggle видимости
+Поле пароля с toggle видимости`
             },
           ]
         },
@@ -158,8 +178,71 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
     }
   ];
 
+  const getFilteredTasks = (data: ReleaseItem[]): ReleaseItem[] => {
+    if (taskFilter === 'all') {
+      return data;
+    }
+
+    const filterTasks = (items: ReleaseItem[]): ReleaseItem[] => {
+      return items
+        .map(item => {
+          if ('executor' in item && item.executor) {
+            if (item.executor === currentUserId) {
+              return item;
+            }
+            return null;
+          }
+
+          if (item.children) {
+            const filteredChildren = filterTasks(item.children);
+            if (filteredChildren.length > 0) {
+              return {
+                ...item,
+                children: filteredChildren
+              };
+            }
+            return null;
+          }
+
+          return null;
+        })
+        .filter(Boolean) as ReleaseItem[];
+    };
+
+    return filterTasks(data);
+  };
+
+  const filteredTasks = getFilteredTasks(mockTasks);
+  console.log(filteredTasks);
+
   const handleTaskClick = (task: TaskItem) => {
     onTaskSelect(task);
+  };
+
+  const handleColleagueClick = (colleague: Colleague) => {
+    onColleagueSelect(colleague);
+  };
+
+  const handleFilterChange = (filter: 'all' | 'my') => {
+    setTaskFilter(filter);
+  };
+
+  const handleInfoClick = (item: ListNode) => {
+    if (item.type === 'release' || item.type === 'project') {
+      setInfoModal({
+        isOpen: true,
+        type: item.type,
+        data: item
+      });
+    }
+  };
+
+  const handleInfoModalClose = () => {
+    setInfoModal({
+      isOpen: false,
+      type: null,
+      data: null
+    });
   };
 
   return (
@@ -167,18 +250,29 @@ const SideBar = ({ onTaskSelect }: SideBarProps) => {
       <NavButtons
         activeList={activeList}
         onListChange={setActiveList}
+        onFilterChange={handleFilterChange}
+        currentFilter={taskFilter}
       />
 
       {activeList === 'tasks' ? (
         <TasksList
-          items={mockTasks}
+          items={filteredTasks}
           onItemClick={handleTaskClick}
+          onInfoClick={handleInfoClick}
         />
       ) : (
         <ColleaguesList
           items={mockColleagues}
+          onItemClick={handleColleagueClick}
         />
       )}
+
+      <InfoModal
+        isOpen={infoModal.isOpen}
+        onClose={handleInfoModalClose}
+        type={infoModal.type}
+        data={infoModal.data}
+      />
     </div>
   );
 }

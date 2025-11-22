@@ -7,17 +7,21 @@ const generateDeterministicColor = (id: string): string => {
   for (let i = 0; i < id.length; i++) {
     hash = id.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
     '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
     '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
   ];
-  
+
   return colors[Math.abs(hash) % colors.length];
 };
 
-const TasksList = ({ items, onItemClick }: TasksListProps) => {
+interface TasksListPropsWithInfo extends TasksListProps {
+  onInfoClick?: (item: ListNode) => void;
+}
+
+const TasksList = ({ items, onItemClick, onInfoClick }: TasksListPropsWithInfo) => {
   const listItems: ListNode[] = useMemo(() => {
     return items.map(release => ({
       ...release,
@@ -34,7 +38,7 @@ const TasksList = ({ items, onItemClick }: TasksListProps) => {
       }))
     })) as ListNode[];
   }, [items]);
-  
+
   const handleItemClick = (item: ListNode) => {
     if (item.type === 'task') {
       onItemClick?.(item as TaskItem);
@@ -42,9 +46,10 @@ const TasksList = ({ items, onItemClick }: TasksListProps) => {
   };
 
   return (
-    <List 
+    <List
       items={listItems}
       onItemClick={handleItemClick}
+      onInfoClick={onInfoClick}
       indentSize={15}
       className="tasks-tree"
       defaultExpanded={false}

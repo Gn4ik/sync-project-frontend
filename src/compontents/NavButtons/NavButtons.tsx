@@ -12,15 +12,17 @@ import Modal from "../Modal/Modal";
 interface NavButtonsProps {
   activeList: 'tasks' | 'colleagues';
   onListChange: (list: 'tasks' | 'colleagues') => void;
+  onFilterChange: (filter: 'all' | 'my') => void;
+  currentFilter: 'all' | 'my';
 }
 
-const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
+const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }: NavButtonsProps) => {
   const [popup1Open, setIsPopup1Open] = useState(false);
   const [popup2Open, setIsPopup2Open] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonAddRef = useRef<HTMLButtonElement>(null);
   const buttonFilterRef = useRef<HTMLButtonElement>(null);
-  const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | null>(null);
+  const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | 'meeting' | null>(null);
 
   const handleReleaseClick = () => {
     setActiveModal('release');
@@ -36,6 +38,11 @@ const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
     setActiveModal('task');
     closePopup();
   };
+
+  const handleMeetingClick = () => {
+    setActiveModal('meeting');
+    closePopup();
+  }
 
   const handleModalClose = () => {
     setActiveModal(null);
@@ -58,6 +65,16 @@ const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
     setIsPopup1Open(false);
     setIsPopup2Open(false);
   }
+
+  const handleMyTasksClick = () => {
+    onFilterChange('my');
+    closePopup();
+  };
+
+  const handleAllTasksClick = () => {
+    onFilterChange('all');
+    closePopup();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -97,9 +114,9 @@ const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
             <img src={activeList === 'colleagues' ? colleagueActiveIcon : colleagueInactiveIcon} />
           </button>
         </div>
-        <div className='list-buttons'>
-          {activeList === 'tasks' &&
-            (
+        {activeList === 'tasks' &&
+          (
+            <div className='list-buttons'>
               <div className='popup-wrapper'>
                 <button className='list-button' onClick={addTask} ref={buttonAddRef}>
                   <img src={plusIcon} />
@@ -115,31 +132,33 @@ const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
                       <div className="popup-item" onClick={handleReleaseClick}>Релиз</div>
                       <div className="popup-item" onClick={handleProjectClick}>Проект</div>
                       <div className="popup-item" onClick={handleTaskClick}>Задача</div>
+                      <div className="popup-item" onClick={handleMeetingClick}>Встреча</div>
                     </div>
                   </div>
                 </Popup>
               </div>
-            )
-          }
-          <div className='popup-wrapper'>
-            <button className='list-button' onClick={switchFilters} ref={buttonFilterRef}>
-              <img src={filtersIcon} />
-            </button>
-            <Popup
-              isOpen={popup2Open}
-              onClose={closePopup}
-              position='left'
-              triggerRef={buttonFilterRef}
-            >
-              <div className='popup-content'>
-                <div className="popup-list">
-                  <div className="popup-item">Мои задачи</div>
-                  <div className="popup-item">Все задачи</div>
-                </div>
+              <div className='popup-wrapper'>
+                <button className='list-button' onClick={switchFilters} ref={buttonFilterRef}>
+                  <img src={filtersIcon} />
+                </button>
+                <Popup
+                  isOpen={popup2Open}
+                  onClose={closePopup}
+                  position='left'
+                  triggerRef={buttonFilterRef}
+                >
+                  <div className='popup-content'>
+                    <div className="popup-list">
+                      <div className={`popup-item ${currentFilter === 'my' ? 'active' : ''}`}
+                        onClick={handleMyTasksClick}>Мои задачи</div>
+                      <div className={`popup-item ${currentFilter === 'all' ? 'active' : ''}`}
+                        onClick={handleAllTasksClick}>Все задачи</div>
+                    </div>
+                  </div>
+                </Popup>
               </div>
-            </Popup>
-          </div>
-        </div>
+            </div>
+          )}
       </div>
 
       <Modal
@@ -161,6 +180,13 @@ const NavButtons = ({ activeList, onListChange }: NavButtonsProps) => {
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type="release"
+      />
+
+      <Modal 
+      isOpen={activeModal === 'meeting'}
+      onClose={handleModalClose}
+      onSubmit={handleModalSubmit}
+      type="meeting"
       />
     </>
   );

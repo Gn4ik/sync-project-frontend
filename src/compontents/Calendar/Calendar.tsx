@@ -157,9 +157,13 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
   };
 
   const calendarClass = `calendar border-${status}`;
+  let calendarPosition;
+  
+  if (status != 'primary')
+    calendarPosition = `relative`;
 
   return (
-    <div className={calendarClass}>
+    <div className={calendarClass + ' ' + calendarPosition}>
       <div className="calendar-header">
         <div className="calendar-navigation">
           <h3>{getMonthYearString()}</h3>
@@ -168,14 +172,14 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
             onClick={goToPreviousMonth}
             aria-label="Предыдущий месяц"
           >
-            ‹
+            ❯
           </button>
           <button
-            className="nav-button next-button"
+            className="nav-button"
             onClick={goToNextMonth}
             aria-label="Следующий месяц"
           >
-            ›
+            ❯
           </button>
         </div>
       </div>
