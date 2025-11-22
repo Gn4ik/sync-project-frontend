@@ -1,0 +1,63 @@
+.date-group {
+  margin-bottom: 32px;
+}
+
+.calendar-events-container {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.events-list {
+  width: 100%;
+  margin: 32px;
+}
+
+.date-header {
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.blue-line {
+  max-width: 510px;
+  height: 2px;
+  background-color: #1A73E8;
+  margin-bottom: 12px;
+}
+
+.events-for-date {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+}
+
+.event-time {
+  font-weight: 600;
+  font-size: 16px;
+  width: 50px;
+  color: #2D2D2D;
+}
+
+.event-title-inline {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2D2D2D;
+  line-height: 1.2;
+}
+
+.event-time.no-time {
+  width: 0;
+}
+
+.event-title-inline.deadline {
+  color: #0B57D0;
+  font-weight: 500;
+}

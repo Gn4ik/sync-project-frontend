@@ -75,6 +75,55 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-wrapper,
+.notifications-wrapper {
+  position: relative;
+}
+
+.calendar-events-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.calendar-event-item {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-event-item:hover {
+  background-color: var(--background-secondary);
+}
+
+.calendar-event-item:last-child {
+  border-bottom: none;
+}
+
+.event-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.event-title {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.event-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
   .notifications-popup {
     right: -50px;
