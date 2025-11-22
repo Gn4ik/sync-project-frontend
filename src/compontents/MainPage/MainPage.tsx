@@ -41,7 +41,11 @@ const MainPage = () => {
 				isCalendarActive={showCalendarEvents}
 			/>
 			<div className="container-row">
-				<SideBar onTaskSelect={handleTaskSelect} onColleagueSelect={handleColleagueSelect} />
+				<SideBar
+					onTaskSelect={handleTaskSelect}
+					onColleagueSelect={handleColleagueSelect}
+					userRole={currentUserRole}
+				/>
 
 				{selectedTask ? (
 					<TaskInfo selectedTask={selectedTask} />

@@ -8,21 +8,33 @@ import plusIcon from '../../icons/plus.svg';
 import filtersIcon from '../../icons/filters.svg';
 import './NavButtons.css';
 import Modal from "../Modal/Modal";
+import UserModal from "../UserModal/UserModal";
 
 interface NavButtonsProps {
   activeList: 'tasks' | 'colleagues';
   onListChange: (list: 'tasks' | 'colleagues') => void;
-  onFilterChange: (filter: 'all' | 'my') => void;
-  currentFilter: 'all' | 'my';
+  onFilterChange: (filter: string) => void;
+  currentFilter: string;
+  userRole: 'user' | 'manager' | 'admin';
 }
 
-const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }: NavButtonsProps) => {
+const managerStatusFilters = [
+  { key: 'all', label: 'Все задачи' },
+  { key: 'to-execution', label: 'К выполнению' },
+  { key: 'on-work', label: 'В работе' },
+  { key: 'on-review', label: 'На ревью' },
+  { key: 'completed', label: 'Завершены' },
+  { key: 'stopped', label: 'Остановлены' },
+  { key: 'closed', label: 'Закрыты' },
+];
+
+const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter }: NavButtonsProps) => {
   const [popup1Open, setIsPopup1Open] = useState(false);
   const [popup2Open, setIsPopup2Open] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonAddRef = useRef<HTMLButtonElement>(null);
   const buttonFilterRef = useRef<HTMLButtonElement>(null);
-  const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | 'meeting' | null>(null);
+  const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | 'meeting' | 'user' | 'office' | null>(null);
 
   const handleReleaseClick = () => {
     setActiveModal('release');
@@ -42,7 +54,17 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
   const handleMeetingClick = () => {
     setActiveModal('meeting');
     closePopup();
-  }
+  };
+
+  const handleUserClick = () => {
+    setActiveModal('user');
+    closePopup();
+  };
+
+  const handleOfficeClick = () => {
+    setActiveModal('office');
+    closePopup();
+  };
 
   const handleModalClose = () => {
     setActiveModal(null);
@@ -55,16 +77,16 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
 
   const addTask = () => {
     setIsPopup1Open(true);
-  }
+  };
 
   const switchFilters = () => {
     setIsPopup2Open(true);
-  }
+  };
 
   const closePopup = () => {
     setIsPopup1Open(false);
     setIsPopup2Open(false);
-  }
+  };
 
   const handleMyTasksClick = () => {
     onFilterChange('my');
@@ -96,9 +118,11 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
     };
   }, [popup1Open, popup2Open]);
 
+  const showAddButton = userRole === 'manager' || userRole === 'admin';
+  const showFilterButton = userRole === 'user' || userRole === 'manager';
+
   return (
     <>
-
       <div className='task-list-buttons'>
         <div className='list-buttons'>
           <button
@@ -114,9 +138,10 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
             <img src={activeList === 'colleagues' ? colleagueActiveIcon : colleagueInactiveIcon} />
           </button>
         </div>
-        {activeList === 'tasks' &&
-          (
-            <div className='list-buttons'>
+
+        {activeList === 'tasks' && (
+          <div className='list-buttons'>
+            {showAddButton && (
               <div className='popup-wrapper'>
                 <button className='list-button' onClick={addTask} ref={buttonAddRef}>
                   <img src={plusIcon} />
@@ -129,18 +154,32 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
                 >
                   <div className='popup-content'>
                     <div className="popup-list">
-                      <div className="popup-item" onClick={handleReleaseClick}>Релиз</div>
-                      <div className="popup-item" onClick={handleProjectClick}>Проект</div>
-                      <div className="popup-item" onClick={handleTaskClick}>Задача</div>
-                      <div className="popup-item" onClick={handleMeetingClick}>Встреча</div>
+                      {userRole === 'manager' && (
+                        <>
+                          <div className="popup-item" onClick={handleReleaseClick}>Релиз</div>
+                          <div className="popup-item" onClick={handleProjectClick}>Проект</div>
+                          <div className="popup-item" onClick={handleTaskClick}>Задача</div>
+                          <div className="popup-item" onClick={handleMeetingClick}>Встреча</div>
+                        </>
+                      )}
+                      {userRole === 'admin' && (
+                        <>
+                          <div className="popup-item" onClick={handleOfficeClick}>Офис</div>
+                          <div className="popup-item" onClick={handleUserClick}>Пользователь</div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </Popup>
               </div>
+            )}
+
+            {showFilterButton && (
               <div className='popup-wrapper'>
                 <button className='list-button' onClick={switchFilters} ref={buttonFilterRef}>
                   <img src={filtersIcon} />
                 </button>
+
                 <Popup
                   isOpen={popup2Open}
                   onClose={closePopup}
@@ -148,17 +187,43 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
                   triggerRef={buttonFilterRef}
                 >
                   <div className='popup-content'>
-                    <div className="popup-list">
-                      <div className={`popup-item ${currentFilter === 'my' ? 'active' : ''}`}
-                        onClick={handleMyTasksClick}>Мои задачи</div>
-                      <div className={`popup-item ${currentFilter === 'all' ? 'active' : ''}`}
-                        onClick={handleAllTasksClick}>Все задачи</div>
+                    <div className='popup-list'>
+                      {userRole === 'user' && (
+                        <>
+                          <div className={`popup-item ${currentFilter === 'my' ? 'active' : ''}`}
+                            onClick={handleMyTasksClick}>
+                            Мои задачи
+                          </div>
+                          <div className={`popup-item ${currentFilter === 'all' ? 'active' : ''}`}
+                            onClick={handleAllTasksClick}>
+                            Все задачи
+                          </div>
+                        </>
+                      )}
+
+                      {userRole === 'manager' && (
+                        <>
+                          {managerStatusFilters.map(status => (
+                            <div
+                              key={status.key}
+                              className={`popup-item ${currentFilter === status.key ? 'active' : ''}`}
+                              onClick={() => {
+                                onFilterChange(status.key);
+                                closePopup();
+                              }}
+                            >
+                              {status.label}
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </div>
                   </div>
                 </Popup>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
       </div>
 
       <Modal
@@ -182,11 +247,17 @@ const NavButtons = ({ activeList, onListChange, onFilterChange, currentFilter }:
         type="release"
       />
 
-      <Modal 
-      isOpen={activeModal === 'meeting'}
-      onClose={handleModalClose}
-      onSubmit={handleModalSubmit}
-      type="meeting"
+      <Modal
+        isOpen={activeModal === 'meeting'}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+        type="meeting"
+      />
+
+      <UserModal
+        isOpen={activeModal === 'user'}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
       />
     </>
   );

@@ -9,11 +9,12 @@ import InfoModal from '../InfoModal/InfoModal';
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
   onColleagueSelect: (colleague: Colleague) => void;
+  userRole: 'user' | 'manager' | 'admin';
 }
 
-const SideBar = ({ onTaskSelect, onColleagueSelect }: SideBarProps) => {
+const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
-  const [taskFilter, setTaskFilter] = useState<'all' | 'my'>('all');
+  const [taskFilter, setTaskFilter] = useState<string>('all');
   const [currentUserId, setCurrentUserId] = useState(1);
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
     isOpen: false,
@@ -179,37 +180,45 @@ const SideBar = ({ onTaskSelect, onColleagueSelect }: SideBarProps) => {
   ];
 
   const getFilteredTasks = (data: ReleaseItem[]): ReleaseItem[] => {
-    if (taskFilter === 'all') {
-      return data;
+    if (taskFilter === 'all') return data;
+
+    if (taskFilter === 'my') {
+      const filterMy = (items: ReleaseItem[]): ReleaseItem[] =>
+        items
+          .map(item => {
+            if ('executor' in item && item.executor) {
+              return item.executor === currentUserId ? item : null;
+            }
+
+            if (item.children) {
+              const children = filterMy(item.children);
+              return children.length ? { ...item, children } : null;
+            }
+
+            return null;
+          })
+          .filter(Boolean) as ReleaseItem[];
+
+      return filterMy(data);
     }
 
-    const filterTasks = (items: ReleaseItem[]): ReleaseItem[] => {
-      return items
+    const filterByStatus = (items: ReleaseItem[]): ReleaseItem[] =>
+      items
         .map(item => {
-          if ('executor' in item && item.executor) {
-            if (item.executor === currentUserId) {
-              return item;
-            }
-            return null;
+          if ('status' in item) {
+            return item.status === taskFilter ? item : null;
           }
 
           if (item.children) {
-            const filteredChildren = filterTasks(item.children);
-            if (filteredChildren.length > 0) {
-              return {
-                ...item,
-                children: filteredChildren
-              };
-            }
-            return null;
+            const children = filterByStatus(item.children);
+            return children.length ? { ...item, children } : null;
           }
 
           return null;
         })
         .filter(Boolean) as ReleaseItem[];
-    };
 
-    return filterTasks(data);
+    return filterByStatus(data);
   };
 
   const filteredTasks = getFilteredTasks(mockTasks);
@@ -223,7 +232,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect }: SideBarProps) => {
     onColleagueSelect(colleague);
   };
 
-  const handleFilterChange = (filter: 'all' | 'my') => {
+  const handleFilterChange = (filter: string) => {
     setTaskFilter(filter);
   };
 
@@ -252,6 +261,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect }: SideBarProps) => {
         onListChange={setActiveList}
         onFilterChange={handleFilterChange}
         currentFilter={taskFilter}
+        userRole={userRole}
       />
 
       {activeList === 'tasks' ? (
