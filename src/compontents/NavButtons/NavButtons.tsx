@@ -120,31 +120,63 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
 
   const showAddButton = userRole === 'manager' || userRole === 'admin';
   const showFilterButton = userRole === 'user' || userRole === 'manager';
+  const showListButtons = userRole !== 'admin';
 
   return (
     <>
       <div className='task-list-buttons'>
-        <div className='list-buttons'>
-          <button
-            className={`list-button ${activeList === 'tasks' ? 'active-active' : ''}`}
-            onClick={() => onListChange('tasks')}
-          >
-            <img src={activeList === 'tasks' ? releasesActiveIcon : releasesInactiveIcon} />
-          </button>
-          <button
-            className={`list-button ${activeList === 'colleagues' ? 'active' : ''}`}
-            onClick={() => onListChange('colleagues')}
-          >
-            <img src={activeList === 'colleagues' ? colleagueActiveIcon : colleagueInactiveIcon} />
-          </button>
-        </div>
+        {showListButtons && (
+          <div className='list-buttons'>
+            <button
+              className={`list-button ${activeList === 'tasks' ? 'active-active' : ''}`}
+              onClick={() => onListChange('tasks')}
+            >
+              <img
+                src={activeList === 'tasks' ? releasesActiveIcon : releasesInactiveIcon}
+                alt="Задачи"
+              />
+            </button>
+            <button
+              className={`list-button ${activeList === 'colleagues' ? 'active' : ''}`}
+              onClick={() => onListChange('colleagues')}
+            >
+              <img
+                src={activeList === 'colleagues' ? colleagueActiveIcon : colleagueInactiveIcon}
+                alt="Сотрудники"
+              />
+            </button>
+          </div>
+        )}
 
-        {activeList === 'tasks' && (
+        {userRole === 'admin' && (
+          <div className='list-buttons'>
+            <div className='popup-wrapper'>
+              <button className='list-button' onClick={addTask} ref={buttonAddRef}>
+                <img src={plusIcon} alt="Добавить" />
+              </button>
+              <Popup
+                isOpen={popup1Open}
+                onClose={closePopup}
+                position='right'
+                triggerRef={buttonAddRef}
+              >
+                <div className='popup-content'>
+                  <div className="popup-list">
+                    <div className="popup-item" onClick={handleOfficeClick}>Офис</div>
+                    <div className="popup-item" onClick={handleUserClick}>Пользователь</div>
+                  </div>
+                </div>
+              </Popup>
+            </div>
+          </div>
+        )}
+
+        {userRole !== 'admin' && activeList === 'tasks' && (
           <div className='list-buttons'>
             {showAddButton && (
               <div className='popup-wrapper'>
                 <button className='list-button' onClick={addTask} ref={buttonAddRef}>
-                  <img src={plusIcon} />
+                  <img src={plusIcon} alt="Добавить" />
                 </button>
                 <Popup
                   isOpen={popup1Open}
@@ -154,20 +186,10 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
                 >
                   <div className='popup-content'>
                     <div className="popup-list">
-                      {userRole === 'manager' && (
-                        <>
-                          <div className="popup-item" onClick={handleReleaseClick}>Релиз</div>
-                          <div className="popup-item" onClick={handleProjectClick}>Проект</div>
-                          <div className="popup-item" onClick={handleTaskClick}>Задача</div>
-                          <div className="popup-item" onClick={handleMeetingClick}>Встреча</div>
-                        </>
-                      )}
-                      {userRole === 'admin' && (
-                        <>
-                          <div className="popup-item" onClick={handleOfficeClick}>Офис</div>
-                          <div className="popup-item" onClick={handleUserClick}>Пользователь</div>
-                        </>
-                      )}
+                      <div className="popup-item" onClick={handleReleaseClick}>Релиз</div>
+                      <div className="popup-item" onClick={handleProjectClick}>Проект</div>
+                      <div className="popup-item" onClick={handleTaskClick}>Задача</div>
+                      <div className="popup-item" onClick={handleMeetingClick}>Встреча</div>
                     </div>
                   </div>
                 </Popup>
@@ -177,7 +199,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
             {showFilterButton && (
               <div className='popup-wrapper'>
                 <button className='list-button' onClick={switchFilters} ref={buttonFilterRef}>
-                  <img src={filtersIcon} />
+                  <img src={filtersIcon} alt="Фильтры" />
                 </button>
 
                 <Popup
@@ -190,12 +212,16 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
                     <div className='popup-list'>
                       {userRole === 'user' && (
                         <>
-                          <div className={`popup-item ${currentFilter === 'my' ? 'active' : ''}`}
-                            onClick={handleMyTasksClick}>
+                          <div
+                            className={`popup-item ${currentFilter === 'my' ? 'active' : ''}`}
+                            onClick={handleMyTasksClick}
+                          >
                             Мои задачи
                           </div>
-                          <div className={`popup-item ${currentFilter === 'all' ? 'active' : ''}`}
-                            onClick={handleAllTasksClick}>
+                          <div
+                            className={`popup-item ${currentFilter === 'all' ? 'active' : ''}`}
+                            onClick={handleAllTasksClick}
+                          >
                             Все задачи
                           </div>
                         </>

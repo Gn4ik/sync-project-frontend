@@ -14,6 +14,13 @@ export type User = {
   name: string;
 }
 
+export type Office = {
+  colleagues: Colleague[];
+  id: string;
+  name: string;
+  manager: string;
+}
+
 export type TaskItem = {
   id: string;
   title: string;
@@ -51,6 +58,7 @@ export type TasksListProps = {
 
 export type TaskInfoProps = {
   selectedTask?: TaskItem | null;
+  userRole: string;
 }
 
 export interface Colleague {

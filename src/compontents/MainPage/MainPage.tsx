@@ -48,7 +48,7 @@ const MainPage = () => {
 				/>
 
 				{selectedTask ? (
-					<TaskInfo selectedTask={selectedTask} />
+					<TaskInfo selectedTask={selectedTask} userRole={currentUserRole}/>
 				) : selectedColleague ? (
 					<ColleagueInfo selectedColleague={selectedColleague} />
 				) : showCalendarEvents ? (

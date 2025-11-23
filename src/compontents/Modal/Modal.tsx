@@ -27,37 +27,57 @@ const Modal = ({
   initialData
 }: ModalProps) => {
 
-  const [formData, setFormData] = useState(() => {
-    if (mode === 'edit' && initialData) {
-      return {
-        title: initialData.title || '',
-        description: initialData.description || '',
-        deadline: initialData.deadline || '',
-        link: initialData.link || '',
-        version: initialData.version || '',
-        participants: [] as string[],
-        meetingDate: '',
-        meetingTime: ''
-      };
-    }
-    return {
-      title: '',
-      project: '',
-      assignee: '',
-      deadline: '',
-      description: '',
-      link: '',
-      version: '',
-      participants: [] as string[],
-      meetingDate: '',
-      meetingTime: ''
-    };
+  const [formData, setFormData] = useState({
+    title: '',
+    project: '',
+    assignee: '',
+    deadline: '',
+    description: '',
+    link: '',
+    version: '',
+    participants: [] as string[],
+    meetingDate: '',
+    meetingTime: ''
   });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === 'edit' && initialData) {
+        setFormData({
+          title: initialData.title || '',
+          description: initialData.description || '',
+          deadline: initialData.deadline || '',
+          link: initialData.link || '',
+          version: initialData.version || '',
+          participants: initialData.participants || [],
+          meetingDate: initialData.meetingDate || '',
+          meetingTime: initialData.meetingTime || '',
+          project: initialData.project || '',
+          assignee: initialData.assignee || ''
+        });
+      } else {
+        setFormData({
+          title: '',
+          project: '',
+          assignee: '',
+          deadline: '',
+          description: '',
+          link: '',
+          version: '',
+          participants: [],
+          meetingDate: '',
+          meetingTime: ''
+        });
+      }
+      setSearchTerm('');
+      setShowDropdown(false);
+    }
+  }, [isOpen, initialData, mode]);
 
   const modalTitles = {
     release: mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз',
@@ -95,19 +115,6 @@ const Modal = ({
       type: type
     });
     onClose();
-    setFormData({
-      title: '',
-      project: '',
-      assignee: '',
-      deadline: '',
-      description: '',
-      link: '',
-      version: '',
-      participants: [],
-      meetingDate: '',
-      meetingTime: ''
-    });
-    setSearchTerm('');
   };
 
   const handleChange = (field: string, value: string) => {

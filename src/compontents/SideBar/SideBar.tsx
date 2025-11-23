@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Colleague, ListNode, ReleaseItem, TaskItem } from '../types/types';
+import { Colleague, ListNode, Office, ReleaseItem, TaskItem } from '../types/types';
 import ColleaguesList from '../ColleaguesList/ColleaguesList';
 import InfoModal from '../InfoModal/InfoModal';
+import OfficesList from '../OfficesList/OfficesList';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
@@ -179,6 +180,65 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     }
   ];
 
+  const mockOffices: Office[] = [
+    {
+      id: '1',
+      name: 'Главный офис',
+      manager: mockColleagues[1].name,
+      colleagues: [
+        {
+          id: '1',
+          name: 'Артем Evil',
+          position: 'Backend-разработчик',
+          department: 'Разработка',
+          isOnline: true
+        },
+        {
+          id: '5',
+          name: 'Иван Садиков',
+          position: 'Глава отдела',
+          department: 'Управление',
+          isOnline: true
+        }
+      ]
+    },
+    {
+      id: '2',
+      name: 'Филиал СПб',
+      manager: mockColleagues[3].name,
+      colleagues: [
+        {
+          id: '2',
+          name: 'Gn4ik',
+          position: 'Frontend-разработчик',
+          department: 'Разработка',
+          isOnline: true
+        },
+        {
+          id: '3',
+          name: 'Ksu Vedernikova',
+          position: 'Технический писатель',
+          department: 'Тестирование',
+          isOnline: false
+        }
+      ]
+    },
+    {
+      id: '3',
+      name: 'Офис разработки',
+      manager: mockColleagues[0].name,
+      colleagues: [
+        {
+          id: '4',
+          name: 'Полина Сидорина',
+          position: 'Дизайнер',
+          department: 'Дизайн',
+          isOnline: true
+        }
+      ]
+    }
+  ];
+
   const getFilteredTasks = (data: ReleaseItem[]): ReleaseItem[] => {
     if (taskFilter === 'all') return data;
 
@@ -264,7 +324,12 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
         userRole={userRole}
       />
 
-      {activeList === 'tasks' ? (
+      {userRole === 'admin' ? (
+        <OfficesList
+          items={mockOffices}
+          onColleagueSelect={handleColleagueClick}
+        />
+      ) : activeList === 'tasks' ? (
         <TasksList
           items={filteredTasks}
           onItemClick={handleTaskClick}
@@ -276,6 +341,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
           onItemClick={handleColleagueClick}
         />
       )}
+
 
       <InfoModal
         isOpen={infoModal.isOpen}
