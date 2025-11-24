@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './List.css';
-import { ListNode, ListProps } from '../types/types';
+import { Colleague, ListNode, ListProps } from '../types/types';
 
 const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode => {
   return {
@@ -98,12 +98,18 @@ const List = ({
 
   const handleItemClick = (item: ListNode) => {
     const hasChildren = item.children && item.children.length > 0;
+    const isColleague = item.type === 'colleague';
 
-    if (hasChildren) {
+    // Для элементов с детьми (офисы) - только разворачиваем/сворачиваем
+    if (hasChildren && !isColleague) {
       toggleExpand(item.id);
     }
 
-    setActiveItemId(item.id);
+    // Для сотрудников - устанавливаем активный элемент
+    if (isColleague) {
+      setActiveItemId(item.id);
+    }
+
     onItemClick?.(item);
   };
 
@@ -130,9 +136,55 @@ const List = ({
     const isExpandedRoot = isRoot && item.isExpanded && hasChildren;
     const showInfoButton = (item.type === 'release' || item.type === 'project') && item.isExpanded;
     const isTask = item.type === 'task';
+    const isColleague = item.type === 'colleague';
 
-    if (renderItem) {
-      return renderItem(item, level);
+    if (isColleague && item.data) {
+      const colleague = item.data as Colleague;
+      const isColleagueActive = colleague.id === activeItemId;
+
+      return (
+        <div
+          key={item.id}
+          className={`tree-block ${isRoot ? 'root-block' : ''}`}
+        >
+          <div
+            className={`tree-item 
+            level-${level} 
+            ${isColleagueActive ? 'active' : ''}
+            ${canExpand ? 'has-children' : ''}
+            ${item.isExpanded ? 'expanded' : ''}
+            colleague-item
+          `}
+            onClick={() => handleItemClick(item)}
+            style={{
+              paddingLeft: `${15 + (level * indentSize)}px`
+            }}
+          >
+            <div className="tree-item-content">
+              <div className="colleague-avatar">
+                {colleague.avatar ? (
+                  <img src={colleague.avatar} alt={colleague.name} />
+                ) : (
+                  <div className="avatar-placeholder">
+                    {colleague.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {colleague.isOnline && <div className="online-indicator" />}
+              </div>
+
+              <div className="colleague-info">
+                <div className="colleague-name">{colleague.name}</div>
+                <div className="colleague-position">{colleague.position}</div>
+                <div className="colleague-department">{colleague.department}</div>
+              </div>
+
+              {showIcons && !canExpand && (
+                <span className="expand-placeholder"></span>
+              )}
+            </div>
+          </div>
+        </div>
+      );
     }
 
     return (
@@ -142,11 +194,11 @@ const List = ({
       >
         <div
           className={`tree-item 
-            level-${level} 
-            ${isActive ? 'active' : ''}
-            ${canExpand ? 'has-children' : ''}
-            ${item.isExpanded ? 'expanded' : ''}
-          `}
+          level-${level} 
+          ${isActive ? 'active' : ''}
+          ${canExpand ? 'has-children' : ''}
+          ${item.isExpanded ? 'expanded' : ''}
+        `}
           onClick={() => handleItemClick(item)}
           style={{
             paddingLeft: `${15 + (level * indentSize)}px`

@@ -13,7 +13,7 @@ const MainPage = () => {
 	const [selectedColleague, setSelectedColleague] = useState<Colleague | null>(null);
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
 
-	const [currentUserRole] = useState<'user' | 'manager' | 'admin'>('manager');
+	const [currentUserRole] = useState<'user' | 'manager' | 'admin'>('user');
 
 	const handleTaskSelect = (task: TaskItem) => {
 		setSelectedTask(task);
@@ -48,9 +48,9 @@ const MainPage = () => {
 				/>
 
 				{selectedTask ? (
-					<TaskInfo selectedTask={selectedTask} userRole={currentUserRole}/>
+					<TaskInfo selectedTask={selectedTask} userRole={currentUserRole} />
 				) : selectedColleague ? (
-					<ColleagueInfo selectedColleague={selectedColleague} />
+					<ColleagueInfo userRole={currentUserRole} selectedColleague={selectedColleague} />
 				) : showCalendarEvents ? (
 					<CalendarEvents />
 				) : (

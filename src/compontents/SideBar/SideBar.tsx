@@ -17,6 +17,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
   const [currentUserId, setCurrentUserId] = useState(1);
+  const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
     isOpen: false,
     type: null,
@@ -183,7 +184,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
   const mockOffices: Office[] = [
     {
       id: '1',
-      name: 'Главный офис',
+      name: 'Офис 1',
       manager: mockColleagues[1].name,
       colleagues: [
         {
@@ -204,7 +205,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     },
     {
       id: '2',
-      name: 'Филиал СПб',
+      name: 'Офис 2',
       manager: mockColleagues[3].name,
       colleagues: [
         {
@@ -225,7 +226,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     },
     {
       id: '3',
-      name: 'Офис разработки',
+      name: 'Офис 3',
       manager: mockColleagues[0].name,
       colleagues: [
         {
@@ -282,13 +283,13 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
   };
 
   const filteredTasks = getFilteredTasks(mockTasks);
-  console.log(filteredTasks);
 
   const handleTaskClick = (task: TaskItem) => {
     onTaskSelect(task);
   };
 
   const handleColleagueClick = (colleague: Colleague) => {
+    setActiveColleagueId(colleague.id);
     onColleagueSelect(colleague);
   };
 
@@ -339,9 +340,10 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
         <ColleaguesList
           items={mockColleagues}
           onItemClick={handleColleagueClick}
+          activeColleagueId={activeColleagueId}
+          onActiveColleagueChange={setActiveColleagueId}
         />
       )}
-
 
       <InfoModal
         isOpen={infoModal.isOpen}

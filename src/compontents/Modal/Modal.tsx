@@ -5,7 +5,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (formData: any) => void;
-  type: 'release' | 'project' | 'task' | 'meeting';
+  type: 'release' | 'project' | 'task' | 'meeting' | 'colleague';
   mode?: 'create' | 'edit';
   initialData?: any;
 }
@@ -16,6 +16,12 @@ const mockColleagues = [
   { id: '3', name: 'Ksu Vedernikova', position: 'Технический писатель' },
   { id: '4', name: 'Полина Сидорина', position: 'Дизайнер' },
   { id: '5', name: 'Иван Садиков', position: 'Глава отдела' }
+];
+
+const mockOffices = [
+  { id: '1', name: 'офис 1' },
+  { id: '2', name: 'офис 2' },
+  { id: '3', name: 'офис 3' }
 ];
 
 const Modal = ({
@@ -29,12 +35,22 @@ const Modal = ({
 
   const [formData, setFormData] = useState({
     title: '',
+    name: '',
+    position: '',
+    department: '',
+    office: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    isOnline: false,
+
     project: '',
     assignee: '',
     deadline: '',
     description: '',
     link: '',
     version: '',
+
     participants: [] as string[],
     meetingDate: '',
     meetingTime: ''
@@ -50,6 +66,14 @@ const Modal = ({
       if (mode === 'edit' && initialData) {
         setFormData({
           title: initialData.title || '',
+          name: initialData.name || '',
+          position: initialData.position || '',
+          department: initialData.department || '',
+          office: initialData.office || '',
+          email: initialData.email || '',
+          phone: initialData.phone || '',
+          birthDate: initialData.birthDate || '',
+          isOnline: initialData.isOnline || false,
           description: initialData.description || '',
           deadline: initialData.deadline || '',
           link: initialData.link || '',
@@ -63,15 +87,23 @@ const Modal = ({
       } else {
         setFormData({
           title: '',
-          project: '',
-          assignee: '',
-          deadline: '',
+          name: '',
+          position: '',
+          department: '',
+          office: '',
+          email: '',
+          phone: '',
+          birthDate: '',
+          isOnline: false,
           description: '',
+          deadline: '',
           link: '',
           version: '',
           participants: [],
           meetingDate: '',
-          meetingTime: ''
+          meetingTime: '',
+          project: '',
+          assignee: ''
         });
       }
       setSearchTerm('');
@@ -83,7 +115,8 @@ const Modal = ({
     release: mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз',
     project: mode === 'edit' ? 'Редактировать проект' : 'Создать проект',
     task: mode === 'edit' ? 'Редактировать задачу' : 'Создать задачу',
-    meeting: mode === 'edit' ? 'Редактировать встречу' : 'Создать встречу'
+    meeting: mode === 'edit' ? 'Редактировать встречу' : 'Создать встречу',
+    colleague: mode === 'edit' ? 'Редактировать сотрудника' : 'Добавить сотрудника'
   };
 
   const filteredColleagues = mockColleagues.filter(colleague =>
@@ -117,7 +150,7 @@ const Modal = ({
     onClose();
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -176,189 +209,284 @@ const Modal = ({
         <form onSubmit={handleSubmit}>
           <div className='form-wrapper'>
             <div className="form-section">
-
-              <div className="form-group">
-                <label className="form-label">Название:</label>
-                <input
-                  type="text"
-                  className="form-input form-text"
-                  placeholder={`Введите название ${type === 'release' ? 'релиза' : type === 'project' ? 'проекта' : type === 'meeting' ? 'встречи' : 'задачи'}`}
-                  value={formData.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
-                  required
-                />
-              </div>
-
-              {type === 'meeting' && (
-                <div className="form-group">
-                  <label className="form-label">Проект:</label>
-                  <select
-                    className="form-select form-text"
-                    value={formData.project}
-                    onChange={(e) => handleChange('project', e.target.value)}
-                    required
-                  >
-                    <option value="" disabled hidden>Выберите проект</option>
-                    <option value="project1" className='form-text'>Проект 1</option>
-                    <option value="project2" className='form-text'>Проект 2</option>
-                    <option value="project3" className='form-text'>Проект 3</option>
-                  </select>
-                </div>
-              )}
-
-              {type === 'meeting' && (
-                <div className="form-group">
-                  <label className="form-label">Участники:</label>
-                  <div className="participants-selector">
+              {type === 'colleague' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">ФИО:</label>
                     <input
-                      ref={inputRef}
                       type="text"
                       className="form-input form-text"
-                      placeholder={formData.participants.length === 0 ? "Поиск сотрудников..." : ""}
-                      value={getInputDisplayValue()}
-                      onChange={handleInputChange}
-                      onFocus={handleInputFocus}
+                      placeholder="Введите ФИО сотрудника"
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      required
                     />
-                    {showDropdown && (
-                      <div ref={dropdownRef} className="participants-dropdown">
-                        {filteredColleagues.map(colleague => (
-                          <div
-                            key={colleague.id}
-                            className={`participant-option ${formData.participants.includes(colleague.id) ? 'selected' : ''}`}
-                            onClick={() => handleParticipantToggle(colleague.id)}
-                          >
-                            <div className="participant-info">
-                              <div className="participant-name">{colleague.name}</div>
-                              <div className="participant-position">{colleague.position}</div>
-                            </div>
-                            <div className="participant-checkbox">
-                              {formData.participants.includes(colleague.id) ? '✓' : ''}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {formData.participants.length > 0 && (
-                      <div className="selected-participants">
-                        <div className="selected-participants-label">Выбрано: {getSelectedParticipantsNames()}</div>
-                      </div>
-                    )}
                   </div>
-                </div>
-              )}
 
-              {type === 'meeting' && (
-                <div className="form-group">
-                  <label className="form-label">Дата и время:</label>
-                  <div className="datetime-inputs">
+                  <div className="form-group">
+                    <label className="form-label">Должность:</label>
+                    <input
+                      type="text"
+                      className="form-input form-text"
+                      placeholder="Введите должность"
+                      value={formData.position}
+                      onChange={(e) => handleChange('position', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Отдел:</label>
+                    <input
+                      type="text"
+                      className="form-input form-text"
+                      placeholder="Введите отдел"
+                      value={formData.department}
+                      onChange={(e) => handleChange('department', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Офис:</label>
+                    <select
+                      className="form-select form-text"
+                      value={formData.office}
+                      onChange={(e) => handleChange('office', e.target.value)}
+                      required
+                    >
+                      <option value="" disabled hidden>Выберите офис</option>
+                      {mockOffices.map(office => (
+                        <option key={office.id} value={office.id} className='form-text'>
+                          {office.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Email:</label>
+                    <input
+                      type="email"
+                      className="form-input form-text"
+                      placeholder="Введите email"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Телефон:</label>
+                    <input
+                      type="tel"
+                      className="form-input form-text"
+                      placeholder="Введите телефон"
+                      value={formData.phone}
+                      onChange={(e) => handleChange('phone', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Дата рождения:</label>
                     <input
                       type="date"
                       className="form-input form-text"
-                      value={formData.meetingDate}
-                      onChange={(e) => handleChange('meetingDate', e.target.value)}
-                      required
+                      value={formData.birthDate}
+                      onChange={(e) => handleChange('birthDate', e.target.value)}
                     />
+                  </div>
+                </>
+              )}
+
+              {type !== 'colleague' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Название:</label>
                     <input
-                      type="time"
+                      type="text"
                       className="form-input form-text"
-                      value={formData.meetingTime}
-                      onChange={(e) => handleChange('meetingTime', e.target.value)}
+                      placeholder={`Введите название ${type === 'release' ? 'релиза' : type === 'project' ? 'проекта' : type === 'meeting' ? 'встречи' : 'задачи'}`}
+                      value={formData.title}
+                      onChange={(e) => handleChange('title', e.target.value)}
                       required
                     />
                   </div>
-                </div>
-              )}
 
-              {(type === 'task' || type === 'project') && (
-                <div className="form-group">
-                  <label className="form-label">
-                    {type === 'task' ? 'Проект:' : 'Релиз:'}
-                  </label>
-                  <select
-                    className="form-select form-text"
-                    value={formData.project}
-                    onChange={(e) => handleChange('project', e.target.value)}
-                    required={type === 'task'}
-                  >
-                    <option value="" disabled hidden>
-                      {type === 'task' ? 'Выберите проект' : 'Выберите релиз'}
-                    </option>
-                    <option value="project1" className='form-text'>data1</option>
-                    <option value="project2" className='form-text'>data2</option>
-                    <option value="project3" className='form-text'>data3</option>
-                  </select>
-                </div>
-              )}
+                  {type === 'meeting' && (
+                    <div className="form-group">
+                      <label className="form-label">Проект:</label>
+                      <select
+                        className="form-select form-text"
+                        value={formData.project}
+                        onChange={(e) => handleChange('project', e.target.value)}
+                        required
+                      >
+                        <option value="" disabled hidden>Выберите проект</option>
+                        <option value="project1" className='form-text'>Проект 1</option>
+                        <option value="project2" className='form-text'>Проект 2</option>
+                        <option value="project3" className='form-text'>Проект 3</option>
+                      </select>
+                    </div>
+                  )}
 
-              {type === "project" && (
-                <div className="form-group">
-                  <label className="form-label">Ссылка:</label>
-                  <input
-                    type="text"
-                    className="form-input form-text"
-                    placeholder={`Введите ссылку на проект`}
-                    value={formData.link}
-                    onChange={(e) => handleChange('link', e.target.value)}
-                    required
-                  />
-                </div>
-              )}
+                  {type === 'meeting' && (
+                    <div className="form-group">
+                      <label className="form-label">Участники:</label>
+                      <div className="participants-selector">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          className="form-input form-text"
+                          placeholder={formData.participants.length === 0 ? "Поиск сотрудников..." : ""}
+                          value={getInputDisplayValue()}
+                          onChange={handleInputChange}
+                          onFocus={handleInputFocus}
+                        />
+                        {showDropdown && (
+                          <div ref={dropdownRef} className="participants-dropdown">
+                            {filteredColleagues.map(colleague => (
+                              <div
+                                key={colleague.id}
+                                className={`participant-option ${formData.participants.includes(colleague.id) ? 'selected' : ''}`}
+                                onClick={() => handleParticipantToggle(colleague.id)}
+                              >
+                                <div className="participant-info">
+                                  <div className="participant-name">{colleague.name}</div>
+                                  <div className="participant-position">{colleague.position}</div>
+                                </div>
+                                <div className="participant-checkbox">
+                                  {formData.participants.includes(colleague.id) ? '✓' : ''}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {formData.participants.length > 0 && (
+                          <div className="selected-participants">
+                            <div className="selected-participants-label">Выбрано: {getSelectedParticipantsNames()}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-              {type === "release" && (
-                <div className="form-group">
-                  <label className="form-label">Версия:</label>
-                  <input
-                    type="text"
-                    className="form-input form-text"
-                    placeholder={`Введите версию`}
-                    value={formData.version}
-                    onChange={(e) => handleChange('version', e.target.value)}
-                    required
-                  />
-                </div>
-              )}
+                  {type === 'meeting' && (
+                    <div className="form-group">
+                      <label className="form-label">Дата и время:</label>
+                      <div className="datetime-inputs">
+                        <input
+                          type="date"
+                          className="form-input form-text"
+                          value={formData.meetingDate}
+                          onChange={(e) => handleChange('meetingDate', e.target.value)}
+                          required
+                        />
+                        <input
+                          type="time"
+                          className="form-input form-text"
+                          value={formData.meetingTime}
+                          onChange={(e) => handleChange('meetingTime', e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              {type === 'task' && (
-                <div className="form-group">
-                  <label className="form-label">Исполнитель:</label>
-                  <select
-                    className="form-select form-text"
-                    value={formData.assignee}
-                    onChange={(e) => handleChange('assignee', e.target.value)}
-                    required
-                  >
-                    <option value="" disabled hidden className='form-text'>Выберите исполнителя</option>
-                    <option value="assignee1" className='form-text'>Исполнитель 1</option>
-                    <option value="assignee2" className='form-text'>Исполнитель 2</option>
-                    <option value="assignee3" className='form-text'>Исполнитель 3</option>
-                  </select>
-                </div>
-              )}
+                  {(type === 'task' || type === 'project') && (
+                    <div className="form-group">
+                      <label className="form-label">
+                        {type === 'task' ? 'Проект:' : 'Релиз:'}
+                      </label>
+                      <select
+                        className="form-select form-text"
+                        value={formData.project}
+                        onChange={(e) => handleChange('project', e.target.value)}
+                        required={type === 'task'}
+                      >
+                        <option value="" disabled hidden>
+                          {type === 'task' ? 'Выберите проект' : 'Выберите релиз'}
+                        </option>
+                        <option value="project1" className='form-text'>data1</option>
+                        <option value="project2" className='form-text'>data2</option>
+                        <option value="project3" className='form-text'>data3</option>
+                      </select>
+                    </div>
+                  )}
 
-              {(type !== 'meeting') && (
-                <div className="form-group">
-                  <label className="form-label">Срок:</label>
-                  <input
-                    type="date"
-                    className="form-input form-text"
-                    value={formData.deadline}
-                    onChange={(e) => handleChange('deadline', e.target.value)}
-                    required={type === 'task'}
-                  />
-                </div>
+                  {type === "project" && (
+                    <div className="form-group">
+                      <label className="form-label">Ссылка:</label>
+                      <input
+                        type="text"
+                        className="form-input form-text"
+                        placeholder={`Введите ссылку на проект`}
+                        value={formData.link}
+                        onChange={(e) => handleChange('link', e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {type === "release" && (
+                    <div className="form-group">
+                      <label className="form-label">Версия:</label>
+                      <input
+                        type="text"
+                        className="form-input form-text"
+                        placeholder={`Введите версию`}
+                        value={formData.version}
+                        onChange={(e) => handleChange('version', e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {type === 'task' && (
+                    <div className="form-group">
+                      <label className="form-label">Исполнитель:</label>
+                      <select
+                        className="form-select form-text"
+                        value={formData.assignee}
+                        onChange={(e) => handleChange('assignee', e.target.value)}
+                        required
+                      >
+                        <option value="" disabled hidden className='form-text'>Выберите исполнителя</option>
+                        <option value="assignee1" className='form-text'>Исполнитель 1</option>
+                        <option value="assignee2" className='form-text'>Исполнитель 2</option>
+                        <option value="assignee3" className='form-text'>Исполнитель 3</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {(type !== 'meeting') && (
+                    <div className="form-group">
+                      <label className="form-label">Срок:</label>
+                      <input
+                        type="date"
+                        className="form-input form-text"
+                        value={formData.deadline}
+                        onChange={(e) => handleChange('deadline', e.target.value)}
+                        required={type === 'task'}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            <div className="form-group-description">
-              <label className="form-label description-label">Описание:</label>
-              <textarea
-                className="form-textarea form-text"
-                placeholder="Введите описание"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-              />
-            </div>
+            {type !== 'colleague' && (
+              <div className="form-group-description">
+                <label className="form-label description-label">Описание:</label>
+                <textarea
+                  className="form-textarea form-text"
+                  placeholder="Введите описание"
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="modal-actions">
@@ -367,7 +495,7 @@ const Modal = ({
                 Отменить
               </button>
               <button type="submit" className="btn-primary">
-                {mode === 'edit' ? 'Сохранить' : 'Добавить'}
+                {mode === 'edit' ? 'Сохранить' : type === 'colleague' ? 'Добавить сотрудника' : 'Добавить'}
               </button>
             </div>
           </div>

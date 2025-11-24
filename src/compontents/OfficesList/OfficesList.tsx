@@ -1,74 +1,63 @@
-import { useEffect, useState } from 'react';
-import { Colleague, Office } from '../types/types';
+import React, { useState, useEffect } from 'react';
+import { Office, Colleague } from '../types/types';
+import ColleaguesList from '../ColleaguesList/ColleaguesList';
 import './OfficesList.css';
 import searchIcon from '../../icons/SearchIcon.svg';
 
 interface OfficesListProps {
   items: Office[];
-  onOfficeSelect?: (office: Office) => void;
   onColleagueSelect?: (colleague: Colleague) => void;
 }
 
-const OfficesList = ({ items, onOfficeSelect, onColleagueSelect }: OfficesListProps) => {
-  const [activeOfficeId, setActiveOfficeId] = useState<string | null>(null);
+const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) => {
+  const [expandedOffices, setExpandedOffices] = useState<Set<string>>(new Set());
+  const [hoveredOffice, setHoveredOffice] = useState<string | null>(null);
   const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredOffices, setFilteredOffices] = useState<Office[]>([]);
-  const [expandedOffices, setExpandedOffices] = useState<Set<string>>(new Set());
+  const [filteredOffices, setFilteredOffices] = useState<Office[]>(items);
 
-  const handleOfficeClick = (office: Office) => {
-    onOfficeSelect?.(office);
-    setActiveOfficeId(office.id);
-    setActiveColleagueId(null);
-
+  const toggleOffice = (officeId: string) => {
     setExpandedOffices(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(office.id)) {
-        newSet.delete(office.id);
+      if (newSet.has(officeId)) {
+        newSet.delete(officeId);
       } else {
-        newSet.add(office.id);
+        newSet.add(officeId);
       }
       return newSet;
     });
   };
 
   const handleColleagueClick = (colleague: Colleague) => {
-    onColleagueSelect?.(colleague);
     setActiveColleagueId(colleague.id);
+    onColleagueSelect?.(colleague);
   };
 
-  const searchItems = (query: string, offices: Office[]): Office[] => {
+  const handleInfoMouseEnter = (officeId: string) => {
+    setHoveredOffice(officeId);
+  };
+
+  const handleInfoMouseLeave = () => {
+    setHoveredOffice(null);
+  };
+
+  const searchOffices = (query: string, offices: Office[]): Office[] => {
     if (!query.trim()) return offices;
 
-    return offices
-      .map(office => {
-        const filteredColleagues = office.colleagues?.filter(colleague =>
-          colleague.name.toLowerCase().includes(query.toLowerCase()) ||
-          colleague.position.toLowerCase().includes(query.toLowerCase()) ||
-          (colleague.department && colleague.department.toLowerCase().includes(query.toLowerCase()))
-        ) || [];
-
-        if (filteredColleagues.length > 0) {
-          return {
-            ...office,
-            colleagues: filteredColleagues
-          };
-        }
-
-        if (office.name.toLowerCase().includes(query.toLowerCase())) {
-          return office;
-        }
-
-        return null;
-      })
-      .filter(Boolean) as Office[];
+    return offices.filter(office =>
+      office.name.toLowerCase().includes(query.toLowerCase()) ||
+      office.manager.toLowerCase().includes(query.toLowerCase()) ||
+      office.colleagues.some(colleague =>
+        colleague.name.toLowerCase().includes(query.toLowerCase()) ||
+        colleague.position.toLowerCase().includes(query.toLowerCase()) ||
+        colleague.department.toLowerCase().includes(query.toLowerCase())
+      )
+    );
   };
 
   useEffect(() => {
     if (searchQuery.trim()) {
-      setFilteredOffices(searchItems(searchQuery, items));
-      const officeIdsWithResults = searchItems(searchQuery, items).map(office => office.id);
-      setExpandedOffices(new Set(officeIdsWithResults));
+      setFilteredOffices(searchOffices(searchQuery, items));
     } else {
       setFilteredOffices(items);
     }
@@ -82,21 +71,13 @@ const OfficesList = ({ items, onOfficeSelect, onColleagueSelect }: OfficesListPr
     setSearchQuery('');
   };
 
-  const getManager = (office: Office): Colleague | null => {
-    return office.colleagues?.find(colleague =>
-      colleague.position.toLowerCase().includes('руководитель') ||
-      colleague.position.toLowerCase().includes('manager') ||
-      colleague.position.toLowerCase().includes('глава')
-    ) || null;
-  };
-
   return (
-    <>
+    <div className="offices-list-container">
       <div className="search-container">
         <div className="search-input-wrapper">
           <input
             type="text"
-            placeholder='Поиск сотрудников или офисов'
+            placeholder='Поиск офисов и сотрудников'
             value={searchQuery}
             onChange={handleSearchChange}
             className="search-input"
@@ -111,95 +92,69 @@ const OfficesList = ({ items, onOfficeSelect, onColleagueSelect }: OfficesListPr
         </div>
       </div>
 
-      <div className="tree-list-container">
-        <div className="tree-list">
-          {filteredOffices.map(office => {
-            const manager = getManager(office);
-            const isExpanded = expandedOffices.has(office.id);
-            const hasChildren = office.colleagues && office.colleagues.length > 0;
+      <div className="offices-list">
+        {filteredOffices.map(office => {
+          const isExpanded = expandedOffices.has(office.id);
 
-            return (
-              <div key={office.id} className="tree-block">
-                <div
-                  className={`tree-item level-0 ${activeOfficeId === office.id ? 'active' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}`}
-                  onClick={() => handleOfficeClick(office)}
-                  style={{ paddingLeft: '15px' }}
-                >
-                  <div className="tree-item-content">
-                    {hasChildren && (
-                      <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                        ❯
-                      </span>
-                    )}
+          return (
+            <div key={office.id} className={`office-block ${isExpanded ? 'expanded' : ''}`}>
+              <div
+                className="office-header"
+                onClick={() => toggleOffice(office.id)}
+              >
+                <div className="office-header-content">
+                  <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
+                    ❯
+                  </span>
 
-                    {!hasChildren && (
-                      <span className="expand-placeholder"></span>
-                    )}
+                  <span className="office-title">{office.name}</span>
 
-                    <div className="item-content-wrapper">
-                      <span className="item-title">{office.name}</span>
-                      {manager && (
-                        <span className="office-manager">
-                          {manager.name}
-                        </span>
+                  <div className="office-header-right">
+                    <div className="office-info-wrapper">
+                      {isExpanded && (
+                        <>
+                          <button
+                            className="info-button"
+                            onMouseEnter={() => handleInfoMouseEnter(office.id)}
+                            onMouseLeave={handleInfoMouseLeave}
+                            title={`Руководитель: ${office.manager}`}
+                          >
+                            ℹ
+                          </button>
+
+                          {hoveredOffice === office.id && (
+                            <div className="manager-tooltip">
+                              Руководитель: {office.manager}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
-
-                    <span className="item-badge">
-                      {office.colleagues?.length || 0}
-                    </span>
                   </div>
                 </div>
-
-                {isExpanded && office.colleagues && (
-                  <div className="tree-children">
-                    {office.colleagues.map(colleague => (
-                      <div
-                        key={colleague.id}
-                        className={`tree-item level-1 ${activeColleagueId === colleague.id ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleColleagueClick(colleague);
-                        }}
-                        style={{ paddingLeft: '30px' }}
-                      >
-                        <div className="tree-item-content">
-                          <span className="expand-placeholder"></span>
-
-                          <div className="colleague-avatar">
-                            {colleague.avatar ? (
-                              <img src={colleague.avatar} alt={colleague.name} />
-                            ) : (
-                              <div className="avatar-placeholder">
-                                {colleague.name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            {colleague.isOnline && <div className="online-indicator" />}
-                          </div>
-
-                          <div className="item-content-wrapper">
-                            <span className="item-title">{colleague.name}</span>
-                            <span className="colleague-position">
-                              {colleague.position}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-            );
-          })}
-        </div>
+
+              {isExpanded && (
+                <div className="office-colleagues">
+                  <ColleaguesList
+                    items={office.colleagues}
+                    onItemClick={handleColleagueClick}
+                    activeColleagueId={activeColleagueId}
+                    onActiveColleagueChange={setActiveColleagueId}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {searchQuery && filteredOffices.length === 0 && (
         <div className="no-results">
-          Офисы или сотрудники не найдены
+          Ничего не найдено
         </div>
       )}
-    </>
+    </div>
   );
 };
 

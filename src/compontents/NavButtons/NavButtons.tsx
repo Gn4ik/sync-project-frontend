@@ -157,7 +157,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
               <Popup
                 isOpen={popup1Open}
                 onClose={closePopup}
-                position='right'
+                position='left'
                 triggerRef={buttonAddRef}
               >
                 <div className='popup-content'>

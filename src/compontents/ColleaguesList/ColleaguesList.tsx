@@ -3,13 +3,24 @@ import { Colleague, ColleagueListProps } from '../types/types';
 import './ColleaguesList.css';
 import searchIcon from '../../icons/SearchIcon.svg';
 
-const ColleaguesList = ({ items, onItemClick }: ColleagueListProps) => {
-  const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
+interface ColleaguesListWithActiveProps extends ColleagueListProps {
+  activeColleagueId?: string | null;
+  onActiveColleagueChange?: (id: string | null) => void;
+}
+
+const ColleaguesList = ({
+  items,
+  onItemClick,
+  activeColleagueId,
+  onActiveColleagueChange
+}: ColleaguesListWithActiveProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredColleagues, setFilteredColleagues] = useState<Colleague[]>([]);
+
   const handleItemClick = (colleague: Colleague) => {
+    // Устанавливаем нового активного сотрудника
+    onActiveColleagueChange?.(colleague.id);
     onItemClick?.(colleague);
-    setActiveColleagueId(colleague.id);
   };
 
   const searchColleagues = (query: string, colleagues: Colleague[]): Colleague[] => {
@@ -91,4 +102,4 @@ const ColleaguesList = ({ items, onItemClick }: ColleagueListProps) => {
   );
 };
 
-export default ColleaguesList;  
+export default ColleaguesList;
