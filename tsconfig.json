@@ -16,13 +16,15 @@
     "noEmit": false,
     "jsx": "react-jsx",
     "types": ["node", "jest"],
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
-      "@pages": ["src/pages"],
-      "@components": ["src/components"],
-      "@styles": ["src/styles"],
-      "@types": ["src/types/types"],
-      "@utils": ["src/utils/"]
+      "@pages/*": ["pages/*"],
+      "@components/*": ["components/*"],
+      "@styles/*": ["styles/*"],
+      "@types": ["components/types/types.ts"],
+      "@icons/*": ["icons/*"],
+      "@utils/*": ["utils/*"],
+      "@ui/*": ["components/ui/*"]
     }
   },
   "include": ["src"]
