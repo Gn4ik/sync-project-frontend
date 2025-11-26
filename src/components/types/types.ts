@@ -180,15 +180,25 @@ export type TaskFormData = {
   description: string;
 }
 
+const statusMap: Record<string, TaskStatus> = {
+  'К выполнению': 'to-execution',
+  'В работе': 'on-work',
+  'Отложен': 'stopped',
+  'Завершен': 'completed',
+  'Отменен': 'closed',
+  'На проверке': 'on-review'
+};
+
 export const getTaskStatusFromAlias = (alias: string): TaskStatus => {
-  const statusMap: Record<string, TaskStatus> = {
-    'Создан': 'to-execution',
-    'Активен': 'on-work',
-    'Приостановлен': 'stopped',
-    'Завершен': 'completed',
-    'Отменен': 'closed',
-    'Согласовывается': 'on-review'
-  };
 
   return statusMap[alias] || 'primary';
 };
+
+export const getAliasFromTaskStatus = (status: string): string => {
+
+  const reverseMap = Object.fromEntries(
+    Object.entries(statusMap).map(([key, value]) => [value, key])
+  ) as Record<string, string>;
+
+  return reverseMap[status] || '';
+}

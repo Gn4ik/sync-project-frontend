@@ -1,7 +1,7 @@
 import '@styles/styles.css'
-import ringLogo from '../../icons/Vector.svg'
-import ringLogoActive from '../../icons/notificationIconActive.svg';
-import logout_logo from '../../icons/logout.svg'
+import ringLogo from '@icons/Vector.svg'
+import ringLogoActive from '@icons/notificationIconActive.svg';
+import logout_logo from '@icons/logout.svg'
 import { useEffect, useRef, useState } from 'react';
 import Popup from '../Popup/Popup';
 import './AppHeader.css'

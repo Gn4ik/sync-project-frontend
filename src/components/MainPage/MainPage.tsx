@@ -14,6 +14,7 @@ const MainPage = () => {
 	const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 	const [selectedColleague, setSelectedColleague] = useState<Colleague | null>(null);
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
+	const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
 
 	const [currentUserRole, setCurrentUserRole] = useState<'executor' | 'manager' | 'admin' | null>(null);
 	const [currentUserId, setCurrentUserId] = useState<number>(0);
@@ -72,6 +73,50 @@ const MainPage = () => {
 		setSelectedColleague(null);
 	};
 
+	const handleStatusesLoaded = (statuses: Array<{ id: number; alias: string }>) => {
+		console.log('Statuses received in MainPage:', statuses);
+		setStatusesData(statuses);
+	};
+
+	const handleStatusChange = async (taskId: number, newStatusId: number) => {
+		try {
+			const token = localStorage.getItem('auth_token');
+			if (!token) return;
+
+			console.log(`Changing task ${taskId} status to ${newStatusId}`);
+
+			const response = await fetch(`${URL}/tasks/${taskId}/`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					'ngrok-skip-browser-warning': '0',
+					"SyncAuthToken": token,
+				},
+				body: JSON.stringify({
+					status_id: newStatusId
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update task status');
+			}
+
+			const updatedTask = await response.json();
+			console.log('Task status updated:', updatedTask);
+
+			if (selectedTask && selectedTask.id === taskId) {
+				setSelectedTask(prev => prev ? {
+					...prev,
+					status_id: newStatusId,
+					status: statusesData.find(s => s.id === newStatusId) || prev.status
+				} : null);
+			}
+
+		} catch (error) {
+			console.error('Error updating task status:', error);
+		}
+	};
+
 	return (
 		<>
 			<AppHeader
@@ -85,12 +130,15 @@ const MainPage = () => {
 					onColleagueSelect={handleColleagueSelect}
 					userRole={currentUserRole}
 					userId={currentUserId}
+					onStatusesLoaded={handleStatusesLoaded}
 				/>
 
 				{selectedTask ? (
 					<TaskInfo
 						selectedTask={selectedTask}
 						userRole={currentUserRole}
+						statuses={statusesData}
+						onStatusChange={handleStatusChange}
 					/>
 				) : selectedColleague ? (
 					<ColleagueInfo userRole={currentUserRole} selectedColleague={selectedColleague} />

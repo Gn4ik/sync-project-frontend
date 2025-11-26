@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Office, Colleague } from '@types';
 import ColleaguesList from '../ColleaguesList/ColleaguesList';
 import './OfficesList.css';
-import searchIcon from '../../icons/SearchIcon.svg';
+import searchIcon from '@icons/SearchIcon.svg';
 
 interface OfficesListProps {
   items: Office[];

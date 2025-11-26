@@ -36,8 +36,6 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfo
 
   const managerButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  console.log('Statuses from props:', statuses);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea();
 
   const taskStatus = getTaskStatusFromAlias(selectedTask?.status.alias || '');

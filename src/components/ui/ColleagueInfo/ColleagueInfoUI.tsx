@@ -142,7 +142,7 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
                 <div className="contact-info">
                   <div className="contact-row">
                     <span className="contact-label">Офис:</span>
-                    <span className="contact-value">{selectedColleague.employee_departments?.[0] ? selectedColleague.employee_departments[0].office : 'Не указан'}</span>
+                    <span className="contact-value">{selectedColleague.employee_departments[0].department.name}{', '}{selectedColleague.employee_departments[0].office}</span>
                   </div>
                   <div className="contact-row">
                     <span className="contact-label">Статус:</span>

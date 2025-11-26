@@ -1,7 +1,7 @@
 import React from "react";
 import '@styles/styles.css';
 import './Login.css';
-import SyncIcon from "../../../icons/LoginIcon";
+import SyncIcon from "@icons/LoginIcon";
 
 interface LoginUIProps {
   email: string;

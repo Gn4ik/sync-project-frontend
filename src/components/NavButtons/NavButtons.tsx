@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import Popup from "../Popup/Popup";
-import releasesActiveIcon from '../../icons/releases-active.svg';
-import releasesInactiveIcon from '../../icons/releases-inactive.svg';
-import colleagueActiveIcon from '../../icons/colleague-active.svg';
-import colleagueInactiveIcon from '../../icons/colleague-inactive.svg';
-import plusIcon from '../../icons/plus.svg';
-import filtersIcon from '../../icons/filters.svg';
+import releasesActiveIcon from '@icons/releases-active.svg';
+import releasesInactiveIcon from '@icons/releases-inactive.svg';
+import colleagueActiveIcon from '@icons/colleague-active.svg';
+import colleagueInactiveIcon from '@icons/colleague-inactive.svg';
+import plusIcon from '@icons/plus.svg';
+import filtersIcon from '@icons/filters.svg';
 import './NavButtons.css';
 import Modal from "../Modal/Modal";
 import UserModal from "../UserModal/UserModal";
@@ -22,10 +22,10 @@ const managerStatusFilters = [
   { key: 'all', label: 'Все задачи' },
   { key: 'to-execution', label: 'К выполнению' },
   { key: 'on-work', label: 'В работе' },
-  { key: 'on-review', label: 'На ревью' },
+  { key: 'on-review', label: 'На проверке' },
   { key: 'completed', label: 'Завершены' },
-  { key: 'stopped', label: 'Остановлены' },
-  { key: 'closed', label: 'Закрыты' },
+  { key: 'stopped', label: 'Отложены' },
+  { key: 'closed', label: 'Отменены' },
 ];
 
 const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter }: NavButtonsProps) => {

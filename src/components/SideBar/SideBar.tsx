@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Colleague, ListNode, Office, ProjectItem, ReleaseItem, TaskItem } from '@types';
+import { Colleague, getAliasFromTaskStatus, ListNode, Office, ProjectItem, ReleaseItem, TaskItem } from '@types';
 import ColleaguesList from '../ColleaguesList/ColleaguesList';
 import InfoModal from '../InfoModal/InfoModal';
 import OfficesList from '../OfficesList/OfficesList';
@@ -15,9 +15,10 @@ interface SideBarProps {
   onColleagueSelect: (colleague: Colleague) => void;
   userRole: 'executor' | 'manager' | 'admin' | null;
   userId: number;
+  onStatusesLoaded?: (statuses: Array<{ id: number; alias: string }>) => void;
 }
 
-const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId }: SideBarProps) => {
+const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatusesLoaded }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
   const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
@@ -121,6 +122,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId }: SideBarP
       console.log('Statuses loaded:', statuses);
       setStatusesData(statuses);
       hasLoaded.current.statuses = true;
+      onStatusesLoaded?.(statuses);
       return statuses;
     } catch (error) {
       console.error('Statuses loading failed:', error);
@@ -181,7 +183,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId }: SideBarP
     if (!data || data.length === 0) return [];
 
     if (taskFilter === 'all') return data;
-    
+
 
     if (taskFilter === 'my') {
       const filterMy = (items: ReleaseItem[]): ReleaseItem[] =>
@@ -222,7 +224,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId }: SideBarP
           const filteredProjects = release.projects
             ?.map(project => {
               const filteredTasks = project.tasks?.filter(task =>
-                task.status_id.toString() === taskFilter
+                task.status.alias === getAliasFromTaskStatus(taskFilter)
               );
 
               if (filteredTasks && filteredTasks.length > 0) {
