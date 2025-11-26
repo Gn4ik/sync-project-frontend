@@ -15,7 +15,7 @@ interface NavButtonsProps {
   onListChange: (list: 'tasks' | 'colleagues') => void;
   onFilterChange: (filter: string) => void;
   currentFilter: string;
-  userRole: 'user' | 'manager' | 'admin';
+  userRole: 'user' | 'manager' | 'admin' | null;
 }
 
 const managerStatusFilters = [
@@ -284,6 +284,13 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         isOpen={activeModal === 'user'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
+      />
+
+      <Modal
+        isOpen={activeModal === 'office'}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+        type='office'
       />
     </>
   );

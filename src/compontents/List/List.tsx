@@ -13,31 +13,24 @@ const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode =>
 };
 
 const preserveExpansionState = (oldItems: ListNode[], newItems: ListNode[]): ListNode[] => {
-  const expansionMap = new Map<string, boolean>();
+  const map = new Map<string, boolean>();
 
-  const collectExpansionState = (items: ListNode[]) => {
-    items.forEach(item => {
-      expansionMap.set(item.id, item.isExpanded ?? false);
-      if (item.children) {
-        collectExpansionState(item.children);
-      }
+  const collect = (items: ListNode[]) => {
+    items.forEach(i => {
+      map.set(i.id, i.isExpanded ?? false);
+      if (i.children) collect(i.children);
     });
   };
+  collect(oldItems);
 
-  collectExpansionState(oldItems);
+  const apply = (items: ListNode[]): ListNode[] =>
+    items.map(i => ({
+      ...i,
+      isExpanded: map.get(i.id) ?? false,
+      children: i.children ? apply(i.children) : undefined
+    }));
 
-  const applyExpansionState = (items: ListNode[]): ListNode[] => {
-    return items.map(item => {
-      const isExpanded = expansionMap.get(item.id) ?? item.isExpanded ?? false;
-      return {
-        ...item,
-        isExpanded,
-        children: item.children ? applyExpansionState(item.children) : undefined
-      };
-    });
-  };
-
-  return applyExpansionState(newItems);
+  return apply(newItems);
 };
 
 interface ListPropsWithInfo extends ListProps {
@@ -73,40 +66,42 @@ const List = ({
   }, [items, defaultExpanded]);
 
   const toggleExpand = (id: string) => {
-    setTreeItems(prevItems =>
-      updateItemExpansion(prevItems, id)
-    );
-  };
-
-  const updateItemExpansion = (items: ListNode[], id: string): ListNode[] => {
-    return items.map(item => {
-      if (item.id === id) {
-        const newExpandedState = !item.isExpanded;
-        const updatedItem = { ...item, isExpanded: newExpandedState };
-        onItemToggle?.(updatedItem);
-        return updatedItem;
-      }
-      if (item.children) {
-        return {
-          ...item,
-          children: updateItemExpansion(item.children, id)
-        };
-      }
-      return item;
+    setTreeItems(prevItems => {
+      const updateItem = (items: ListNode[]): ListNode[] => {
+        return items.map(item => {
+          if (item.id === id) {
+            const newExpandedState = !item.isExpanded;
+            console.log(item.isExpanded);
+            console.log(item.title);
+            const updatedItem = { ...item, isExpanded: newExpandedState };
+            onItemToggle?.(updatedItem);
+            return updatedItem;
+          }
+          if (item.children) {
+            return {
+              ...item,
+              children: updateItem(item.children)
+            };
+          }
+          return item;
+        });
+      };
+      return updateItem(prevItems);
     });
   };
 
   const handleItemClick = (item: ListNode) => {
     const hasChildren = item.children && item.children.length > 0;
+    const isExpandable = item.type === 'release' || item.type === 'project';
     const isColleague = item.type === 'colleague';
+    const isTask = item.type === 'task';
 
-    // Для элементов с детьми (офисы) - только разворачиваем/сворачиваем
-    if (hasChildren && !isColleague) {
+    if (hasChildren && isExpandable) {
       toggleExpand(item.id);
+      return;
     }
 
-    // Для сотрудников - устанавливаем активный элемент
-    if (isColleague) {
+    if (isTask || isColleague) {
       setActiveItemId(item.id);
     }
 
@@ -121,22 +116,28 @@ const List = ({
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
 
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    } catch (error) {
+      return dateString;
+    }
   };
 
-  const renderTreeNode = (item: ListNode, level: number = 0, isRoot: boolean = true): React.ReactNode => {
+  const renderTreeNode = (item: ListNode, level: number = 0): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0;
     const canExpand = hasChildren && level < maxLevel;
     const isActive = item.id === activeItemId;
-    const isExpandedRoot = isRoot && item.isExpanded && hasChildren;
     const showInfoButton = (item.type === 'release' || item.type === 'project') && item.isExpanded;
     const isTask = item.type === 'task';
     const isColleague = item.type === 'colleague';
+
+    if (renderItem) {
+      return renderItem(item, level);
+    }
 
     if (isColleague && item.data) {
       const colleague = item.data as Colleague;
@@ -145,7 +146,7 @@ const List = ({
       return (
         <div
           key={item.id}
-          className={`tree-block ${isRoot ? 'root-block' : ''}`}
+          className="tree-block"
         >
           <div
             className={`tree-item 
@@ -163,19 +164,18 @@ const List = ({
             <div className="tree-item-content">
               <div className="colleague-avatar">
                 {colleague.avatar ? (
-                  <img src={colleague.avatar} alt={colleague.name} />
+                  <img src={colleague.avatar} alt={colleague.fname} />
                 ) : (
                   <div className="avatar-placeholder">
-                    {colleague.name.charAt(0).toUpperCase()}
+                    {colleague.fname.charAt(0).toUpperCase()}
                   </div>
                 )}
-                {colleague.isOnline && <div className="online-indicator" />}
               </div>
 
               <div className="colleague-info">
-                <div className="colleague-name">{colleague.name}</div>
+                <div className="colleague-name">{colleague.fname} {colleague.mname} {colleague.lname}</div>
                 <div className="colleague-position">{colleague.position}</div>
-                <div className="colleague-department">{colleague.department}</div>
+                <div className="colleague-department">{colleague.employee_departments?.[0].office}</div>
               </div>
 
               {showIcons && !canExpand && (
@@ -190,7 +190,7 @@ const List = ({
     return (
       <div
         key={item.id}
-        className={`tree-block ${isExpandedRoot ? 'expanded-block' : ''} ${isRoot ? 'root-block' : ''}`}
+        className="tree-block"
       >
         <div
           className={`tree-item 
@@ -205,7 +205,7 @@ const List = ({
           }}
         >
           <div className="tree-item-content">
-            {level === 2 && item.color && (
+            {isTask && item.color && (
               <span
                 className="task-color-marker"
                 style={{ backgroundColor: item.color }}
@@ -222,7 +222,7 @@ const List = ({
               </span>
             )}
 
-            {showIcons && !canExpand && level != 2 && (
+            {showIcons && !canExpand && !isTask && (
               <span className="expand-placeholder"></span>
             )}
 
@@ -253,7 +253,7 @@ const List = ({
 
         {hasChildren && item.isExpanded && item.children && (
           <div className="tree-children">
-            {item.children.map(child => renderTreeNode(child, level + 1, false))}
+            {item.children.map(child => renderTreeNode(child, level + 1))}
           </div>
         )}
       </div>
@@ -266,7 +266,7 @@ const List = ({
       style={style}
     >
       <div className="tree-list">
-        {treeItems.map(item => renderTreeNode(item, 0, true))}
+        {treeItems.map(item => renderTreeNode(item, 0))}
       </div>
     </div>
   );

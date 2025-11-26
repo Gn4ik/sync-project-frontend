@@ -44,15 +44,27 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
   const searchOffices = (query: string, offices: Office[]): Office[] => {
     if (!query.trim()) return offices;
 
-    return offices.filter(office =>
-      office.name.toLowerCase().includes(query.toLowerCase()) ||
-      office.manager.toLowerCase().includes(query.toLowerCase()) ||
-      office.colleagues.some(colleague =>
-        colleague.name.toLowerCase().includes(query.toLowerCase()) ||
-        colleague.position.toLowerCase().includes(query.toLowerCase()) ||
-        colleague.department.toLowerCase().includes(query.toLowerCase())
-      )
-    );
+    const lowercaseQuery = query.toLowerCase();
+
+    return offices.filter(office => {
+      const officeNameMatch = office?.name?.toLowerCase().includes(lowercaseQuery) || false;
+      const managerMatch = office?.manager?.toLowerCase().includes(lowercaseQuery) || false;
+
+      const colleaguesMatch = office?.colleagues?.some(colleague => {
+        if (!colleague) return false;
+
+        const fnameMatch = colleague.fname?.toLowerCase().includes(lowercaseQuery) || false;
+        const mnameMatch = colleague.mname?.toLowerCase().includes(lowercaseQuery) || false;
+        const lnameMatch = colleague.lname?.toLowerCase().includes(lowercaseQuery) || false;
+        const positionMatch = colleague.position?.toLowerCase().includes(lowercaseQuery) || false;
+
+        const departmentMatch = colleague.employee_departments?.[0]?.office?.toLowerCase().includes(lowercaseQuery) || false;
+
+        return fnameMatch || mnameMatch || lnameMatch || positionMatch || departmentMatch;
+      }) || false;
+
+      return officeNameMatch || managerMatch || colleaguesMatch;
+    });
   };
 
   useEffect(() => {

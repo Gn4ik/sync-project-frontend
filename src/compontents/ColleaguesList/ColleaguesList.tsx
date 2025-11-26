@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Colleague, ColleagueListProps } from '../types/types';
+import { Colleague } from '../types/types';
 import './ColleaguesList.css';
 import searchIcon from '../../icons/SearchIcon.svg';
+
+type ColleagueListProps = {
+  items: Colleague[];
+  onItemClick?: (colleague: Colleague) => void;
+}
 
 interface ColleaguesListWithActiveProps extends ColleagueListProps {
   activeColleagueId?: string | null;
@@ -18,7 +23,6 @@ const ColleaguesList = ({
   const [filteredColleagues, setFilteredColleagues] = useState<Colleague[]>([]);
 
   const handleItemClick = (colleague: Colleague) => {
-    // Устанавливаем нового активного сотрудника
     onActiveColleagueChange?.(colleague.id);
     onItemClick?.(colleague);
   };
@@ -26,11 +30,35 @@ const ColleaguesList = ({
   const searchColleagues = (query: string, colleagues: Colleague[]): Colleague[] => {
     if (!query.trim()) return colleagues;
 
-    return colleagues.filter(colleague =>
-      colleague.name.toLowerCase().includes(query.toLowerCase()) ||
-      colleague.position.toLowerCase().includes(query.toLowerCase()) ||
-      (colleague.department && colleague.department.toLowerCase().includes(query.toLowerCase()))
-    );
+    const lowercaseQuery = query.toLowerCase().trim();
+
+    return colleagues.filter(colleague => {
+      if (!colleague) return false;
+
+      const fnameMatch = colleague.fname?.toLowerCase().includes(lowercaseQuery) || false;
+      const mnameMatch = colleague.mname?.toLowerCase().includes(lowercaseQuery) || false;
+      const lnameMatch = colleague.lname?.toLowerCase().includes(lowercaseQuery) || false;
+
+      const positionMatch = colleague.position?.toLowerCase().includes(lowercaseQuery) || false;
+
+      let departmentMatch = false;
+      if (colleague.employee_departments && colleague.employee_departments.length > 0) {
+        const firstDepartment = colleague.employee_departments[0];
+        departmentMatch = firstDepartment?.office?.toLowerCase().includes(lowercaseQuery) || false;
+      }
+
+      const emailMatch = colleague.email?.toLowerCase().includes(lowercaseQuery) || false;
+
+      const phoneMatch = colleague.phone?.toLowerCase().includes(lowercaseQuery) || false;
+
+      return fnameMatch ||
+        mnameMatch ||
+        lnameMatch ||
+        positionMatch ||
+        departmentMatch ||
+        emailMatch ||
+        phoneMatch;
+    });
   };
 
   useEffect(() => {
@@ -78,16 +106,15 @@ const ColleaguesList = ({
           >
             <div className="colleague-avatar">
               {colleague.avatar ? (
-                <img src={colleague.avatar} alt={colleague.name} />
+                <img src={colleague.avatar} alt={colleague.fname} />
               ) : (
                 <div className="avatar-placeholder">
-                  {colleague.name.charAt(0).toUpperCase()}
+                  {colleague.fname.charAt(0).toUpperCase()}
                 </div>
               )}
-              {colleague.isOnline && <div className="online-indicator" />}
             </div>
             <div className="colleague-info">
-              <div className="colleague-name">{colleague.name}</div>
+              <div className="colleague-name">{colleague.lname} {colleague.fname} {colleague.mname}</div>
               <div className="colleague-position">{colleague.position}</div>
             </div>
           </div>

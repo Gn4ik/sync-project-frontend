@@ -111,8 +111,8 @@
 
 .daily-schedule-container {
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  gap: 20px;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 

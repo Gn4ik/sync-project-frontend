@@ -2,21 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Colleague, ListNode, Office, ReleaseItem, TaskItem } from '../types/types';
+import { Colleague, ListNode, Office, ProjectItem, ReleaseItem, TaskItem } from '../types/types';
 import ColleaguesList from '../ColleaguesList/ColleaguesList';
 import InfoModal from '../InfoModal/InfoModal';
 import OfficesList from '../OfficesList/OfficesList';
 
+const URL = process.env.HOST;
+
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
   onColleagueSelect: (colleague: Colleague) => void;
-  userRole: 'user' | 'manager' | 'admin';
+  userRole: 'user' | 'manager' | 'admin' | null;
+  userId: number;
 }
 
-const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) => {
+const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
-  const [currentUserId, setCurrentUserId] = useState(1);
+  const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
   const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
     isOpen: false,
@@ -24,238 +27,186 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     data: null
   });
 
-  // useEffect(() => {
-  //   const savedUserId = localStorage.getItem('currentUserId');
-  //   if (savedUserId) {
-  //     setCurrentUserId(savedUserId);
-  //   }
-  // }, []);
+  const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
+  const [employeesData, setEmployeesData] = useState<Colleague[]>([]);
+  const [departmentsData, setDepartmentsData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockTasks: ReleaseItem[] = [
-    {
-      id: '1',
-      title: 'Релиз 1',
-      isExpanded: false,
-      children: [
-        {
-          id: '2',
-          title: 'Проект 100',
-          isExpanded: false,
-          description: `ЙУЦЙУЛЙЦОО ФЫВЫВФЫВФ ЧЯССЯС zzzzzzzzzzzzzzzzzzzzzzzzzz qqqqqqqqqqqqqqqqq aaaaaaaaaaaaaaaaaaaaaaaaa zzzzzzzzzzzzzzzzzzzzzzzzzz sssssssssssssssssssssssss`,
-          children: [
-            {
-              id: '3',
-              title: 'Разработка формы авторизации для личного кабинета',
-              isExpanded: false,
-              executor: 1,
-              status: 'stopped',
-              createdDate: '2025-11-15',
-              deadline: '2025-12-15',
-              description: `Необходимо разработать адаптивную форму авторизации с валидацией полей. Форма должна включать:
-Поле email с проверкой формата
-Поле пароля с toggle видимости
-Чекбокс "Запомнить меня"
-Кнопку "Войти"
-Ссылки "Забыли пароль?" и "Регистрация"`
-            },
-            {
-              id: '3221',
-              title: 'Разработка формы авторизации для личного кабинета',
-              isExpanded: false,
-              executor: 1,
-              status: 'on-work',
-              createdDate: '2025-11-13',
-              deadline: '2025-11-15',
-              description: `Необходимо разработать адаптивную форму авторизации с валидацией полей. Форма должна включать:
-Поле email с проверкой формата
-Поле пароля с toggle видимости
-Чекбокс "Запомнить меня"
-Кнопку "Войти"
-Ссылки "Забыли пароль?" и "Регистрация"`
-            },
-            {
-              id: '412421',
-              title: 'Разработка формы авторизации для личного кабинета',
-              isExpanded: false,
-              executor: 2,
-              status: 'closed',
-              createdDate: '2025-11-11',
-              deadline: '2025-12-01',
-              description: `Необходимо разработать адаптивную форму авторизации с валидацией полей. Форма должна включать:
-Поле email с проверкой формата
-Поле пароля с toggle видимости
-Чекбокс "Запомнить меня"
-Кнопку "Войти"
-Ссылки "Забыли пароль?" и "Регистрация"`
-            },
-            {
-              id: '65655',
-              title: 'Разработка формы авторизации для личного кабинета',
-              isExpanded: false,
-              executor: 3,
-              status: 'completed',
-              createdDate: '2025-12-15',
-              deadline: '2025-12-31',
-              description: `Необходимо разработать адаптивную форму авторизации с валидацией полей. Форма должна включать:
-Поле email с проверкой формата
-Поле пароля с toggle видимости
-Чекбокс "Запомнить меня"
-Кнопку "Войти"
-Ссылки "Забыли пароль?" и "Регистрация"
-Поле пароля с toggle видимости
-Поле пароля с toggle видимости
-Поле пароля с toggle видимости`
-            },
-          ]
-        },
-        {
-          id: '4',
-          title: 'Проект 2',
-          isExpanded: false,
-        }
-      ]
-    },
-    {
-      id: '5',
-      title: 'Релиз 2',
-      isExpanded: false,
-      children: [
-        {
-          id: '6',
-          title: 'Разработка формы авторизации для личного кабинета',
-        },
-        {
-          id: '7',
-          title: 'Разработка формы авторизации для личного кабинета',
-        },
-      ]
-    },
-    {
-      id: '8',
-      title: 'Релиз 121',
-      isExpanded: false,
-      children: [
-        {
-          id: '9',
-          title: 'проект 1234',
-        }
-      ]
-    }
-  ];
+  const loadReleasesData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-  const mockColleagues: Colleague[] = [
-    {
-      id: '1',
-      name: 'Артем Evil',
-      position: 'Backend-разработчик',
-      department: 'Разработка',
-      isOnline: true
-    },
-    {
-      id: '2',
-      name: 'Gn4ik',
-      position: 'Frontend-разработчик',
-      department: 'Разработка',
-      isOnline: true
-    },
-    {
-      id: '3',
-      name: 'Ksu Vedernikova',
-      position: 'Технический писатель',
-      department: 'Тестирование',
-      isOnline: false
-    },
-    {
-      id: '4',
-      name: 'Полина Сидорина',
-      position: 'Дизайнер',
-      department: 'Дизайн',
-      isOnline: true
-    },
-    {
-      id: '5',
-      name: 'Иван Садиков',
-      position: 'Глава отдела',
-      department: 'Управление',
-      isOnline: true
-    }
-  ];
+      const response = await fetch(`${URL}/releases/all/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0',
+          "SyncAuthToken": token,
+        }
+      });
 
-  const mockOffices: Office[] = [
-    {
-      id: '1',
-      name: 'Офис 1',
-      manager: mockColleagues[1].name,
-      colleagues: [
-        {
-          id: '1',
-          name: 'Артем Evil',
-          position: 'Backend-разработчик',
-          department: 'Разработка',
-          isOnline: true
-        },
-        {
-          id: '5',
-          name: 'Иван Садиков',
-          position: 'Глава отдела',
-          department: 'Управление',
-          isOnline: true
-        }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Офис 2',
-      manager: mockColleagues[3].name,
-      colleagues: [
-        {
-          id: '2',
-          name: 'Gn4ik',
-          position: 'Frontend-разработчик',
-          department: 'Разработка',
-          isOnline: true
-        },
-        {
-          id: '3',
-          name: 'Ksu Vedernikova',
-          position: 'Технический писатель',
-          department: 'Тестирование',
-          isOnline: false
-        }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Офис 3',
-      manager: mockColleagues[0].name,
-      colleagues: [
-        {
-          id: '4',
-          name: 'Полина Сидорина',
-          position: 'Дизайнер',
-          department: 'Дизайн',
-          isOnline: true
-        }
-      ]
+      if (!response.ok) {
+        throw new Error('Releases request failed');
+      }
+
+      const releases: ReleaseItem[] = await response.json();
+      console.log(releases)
+      setReleasesData(releases);
+      return releases;
+
+    } catch (error) {
+      console.error('Releases loading failed:', error);
+      return null;
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const loadEmployees = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch(`${URL}/employees/all/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0',
+          "SyncAuthToken": token,
+        }
+      });
+      
+
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+
+      const employees = await response.json();
+      
+      console.log(employees)
+      setEmployeesData(employees);
+      return employees;
+
+    } catch (error) {
+      console.error('Employees loading failed:', error);
+      return null;
+    }
+  };
+
+  const loadStatuses = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch(`${URL}/statuses/all/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0',
+          "SyncAuthToken": token,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Statuses request failed');
+      }
+
+      const statuses = await response.json();
+
+      console.log(statuses);
+      setStatusesData(statuses);
+      return statuses;
+
+    } catch (error) {
+      console.error('Statuses loading failed:', error);
+      return null;
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch(`${URL}/departments/all/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0',
+          "SyncAuthToken": token,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+
+      const departments = await response.json();
+      console.log(departments);
+      setDepartmentsData(departments);
+      return departments;
+
+    } catch (error) {
+      console.error('Departments loading failed:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const loadAllData = async () => {
+      await Promise.all([
+        loadReleasesData(),
+        loadEmployees(),
+        loadDepartments(),
+        loadStatuses()
+      ]);
+    };
+
+    loadAllData();
+  }, []);
 
   const getFilteredTasks = (data: ReleaseItem[]): ReleaseItem[] => {
+    if (!data || data.length === 0) return [];
+
     if (taskFilter === 'all') return data;
 
     if (taskFilter === 'my') {
       const filterMy = (items: ReleaseItem[]): ReleaseItem[] =>
         items
-          .map(item => {
-            if ('executor' in item && item.executor) {
-              return item.executor === currentUserId ? item : null;
-            }
+          .map(release => {
+            const filteredProjects = release.projects
+              ?.map(project => {
+                const filteredTasks = project.tasks?.filter(task =>
+                  task.executor_id === userId
+                );
 
-            if (item.children) {
-              const children = filterMy(item.children);
-              return children.length ? { ...item, children } : null;
-            }
+                if (filteredTasks && filteredTasks.length > 0) {
+                  return {
+                    ...project,
+                    tasks: filteredTasks
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean) as ProjectItem[];
 
+            if (filteredProjects && filteredProjects.length > 0) {
+              return {
+                ...release,
+                projects: filteredProjects
+              };
+            }
             return null;
           })
           .filter(Boolean) as ReleaseItem[];
@@ -265,16 +216,29 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
 
     const filterByStatus = (items: ReleaseItem[]): ReleaseItem[] =>
       items
-        .map(item => {
-          if ('status' in item) {
-            return item.status === taskFilter ? item : null;
-          }
+        .map(release => {
+          const filteredProjects = release.projects
+            ?.map(project => {
+              const filteredTasks = project.tasks?.filter(task =>
+                task.status_id.toString() === taskFilter
+              );
 
-          if (item.children) {
-            const children = filterByStatus(item.children);
-            return children.length ? { ...item, children } : null;
-          }
+              if (filteredTasks && filteredTasks.length > 0) {
+                return {
+                  ...project,
+                  tasks: filteredTasks
+                };
+              }
+              return null;
+            })
+            .filter(Boolean) as ProjectItem[];
 
+          if (filteredProjects && filteredProjects.length > 0) {
+            return {
+              ...release,
+              projects: filteredProjects
+            };
+          }
           return null;
         })
         .filter(Boolean) as ReleaseItem[];
@@ -282,7 +246,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     return filterByStatus(data);
   };
 
-  const filteredTasks = getFilteredTasks(mockTasks);
+  const filteredTasks = getFilteredTasks(releasesData);
 
   const handleTaskClick = (task: TaskItem) => {
     onTaskSelect(task);
@@ -315,6 +279,10 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
     });
   };
 
+  if (loading) {
+    return <div className="sidebar-container">Loading...</div>;
+  }
+
   return (
     <div className="sidebar-container">
       <NavButtons
@@ -327,7 +295,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
 
       {userRole === 'admin' ? (
         <OfficesList
-          items={mockOffices}
+          items={departmentsData}
           onColleagueSelect={handleColleagueClick}
         />
       ) : activeList === 'tasks' ? (
@@ -338,7 +306,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole }: SideBarProps) =>
         />
       ) : (
         <ColleaguesList
-          items={mockColleagues}
+          items={employeesData}
           onItemClick={handleColleagueClick}
           activeColleagueId={activeColleagueId}
           onActiveColleagueChange={setActiveColleagueId}

@@ -49,8 +49,8 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
     const events: CalendarEvent[] = [];
 
     taskList.forEach(task => {
-      if (task.deadline) {
-        const deadlineDate = new Date(task.deadline);
+      if (task.end_date) {
+        const deadlineDate = new Date(task.end_date);
         const today = new Date();
         const fiveDaysLater = new Date();
         fiveDaysLater.setDate(today.getDate() + 5);
@@ -58,8 +58,8 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
         if (deadlineDate >= today && deadlineDate <= fiveDaysLater) {
           events.push({
             id: `deadline-${task.id}`,
-            title: `Дедлайн задачи "${task.title}"`,
-            date: task.deadline,
+            title: `Дедлайн задачи "${task.name}"`,
+            date: task.end_date,
             type: 'deadline',
             task: task
           });

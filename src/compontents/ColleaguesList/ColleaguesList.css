@@ -170,3 +170,30 @@
   font-size: 20px;
   font-style: italic;
 }
+
+.status-indicator {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.status-working {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-lunch {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-absent {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-unknown {
+  background-color: #e2e3e5;
+  color: #383d41;
+}

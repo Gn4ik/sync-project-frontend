@@ -1,16 +1,27 @@
 import './ColleagueInfo.css';
-import { Colleague } from '../types/types';
+import { Colleague, Schedule } from '../types/types';
 import Calendar from '../Calendar/Calendar';
 import '@styles/styles.css';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Popup from '../Popup/Popup';
 import Modal from '../Modal/Modal';
 
 interface ColleagueInfoProps {
   selectedColleague: Colleague | null;
-  userRole: 'user' | 'manager' | 'admin';
+  userRole: 'user' | 'manager' | 'admin' | null;
   onColleagueEdit?: (colleague: Colleague) => void;
   onColleagueDelete?: (colleagueId: string) => void;
+}
+
+interface ScheduleDay {
+  day: string;
+  workHours: string;
+  lunchHours: string;
+  isWorking: boolean;
+  startTime?: string;
+  endTime?: string;
+  lunchStart?: string;
+  lunchEnd?: string;
 }
 
 const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleagueDelete }: ColleagueInfoProps) => {
@@ -19,37 +30,152 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
   ];
 
-  const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
-
-  const dailySchedule = [
-    { day: 'Понедельник', workHours: '7:00 - 16:00', lunchHours: '12:00 - 13:00' },
-    { day: 'Вторник', workHours: '7:00 - 16:00', lunchHours: '12:00 - 13:00' },
-    { day: 'Среда', workHours: '7:00 - 16:00', lunchHours: '12:00 - 13:00' },
-    { day: 'Четверг', workHours: '7:00 - 16:00', lunchHours: '12:00 - 13:00' },
-    { day: 'Пятница', workHours: '7:00 - 16:00', lunchHours: '12:00 - 13:00' }
-  ];
+  const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 
   const [isAdminPopupOpen, setIsAdminPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно'>('Неизвестно');
   const adminButtonRef = useRef<HTMLButtonElement>(null);
 
-  const getCurrentDayIndex = () => {
+  const formatTime = (timeString: string): string => {
+    if (!timeString || timeString === '00:00:00') return '--:--';
+    return timeString.slice(0, 5);
+  };
+
+  const timeToMinutes = (timeString: string): number => {
+    if (!timeString || timeString === '00:00:00') return 0;
+    const [hours, minutes] = timeString.split(':').slice(0, 2).map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const getCurrentDayKey = (): string => {
+    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const today = new Date().getDay();
+    return days[today];
+  };
+
+  const getCurrentStatus = (): 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно' => {
+    if (!selectedColleague?.schedule) return 'Неизвестно';
+
+    const schedule = selectedColleague.schedule;
+    const currentDayKey = getCurrentDayKey();
+    const currentDayIdKey = `${currentDayKey}_id` as keyof Schedule;
+
+    const isWorkingDay = schedule[currentDayIdKey] !== 0;
+    if (!isWorkingDay) return 'Отсутствует';
+
+    const daySchedule = schedule[currentDayKey as keyof Schedule] as any;
+    if (!daySchedule || daySchedule.starttime === '00:00:00') return 'Отсутствует';
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const workStart = timeToMinutes(daySchedule.starttime);
+    const workEnd = timeToMinutes(daySchedule.endtime);
+    const lunchStart = timeToMinutes(daySchedule.lunchbreak_start);
+    const lunchEnd = timeToMinutes(daySchedule.lunchbreak_end);
+
+    if (lunchStart > 0 && lunchEnd > 0 && currentMinutes >= lunchStart && currentMinutes <= lunchEnd) {
+      return 'Обед';
+    }
+
+    if (currentMinutes >= workStart && currentMinutes <= workEnd) {
+      return 'На работе';
+    }
+
+    return 'Отсутствует';
+  };
+
+  const getColleagueSchedule = (): ScheduleDay[] => {
+    if (!selectedColleague?.schedule) {
+      return daysOfWeek.map((day, index) => ({
+        day,
+        workHours: index < 5 ? '09:00 - 17:00' : 'Выходной',
+        lunchHours: index < 5 ? '13:00 - 14:00' : '-',
+        isWorking: index < 5
+      }));
+    }
+
+    const schedule = selectedColleague.schedule;
+
+    const dayMappings = [
+      { key: 'mon', idKey: 'mon_id', name: 'Понедельник' },
+      { key: 'tue', idKey: 'tue_id', name: 'Вторник' },
+      { key: 'wed', idKey: 'wed_id', name: 'Среда' },
+      { key: 'thu', idKey: 'thu_id', name: 'Четверг' },
+      { key: 'fri', idKey: 'fri_id', name: 'Пятница' },
+      { key: 'sat', idKey: 'sat_id', name: 'Суббота' },
+      { key: 'sun', idKey: 'sun_id', name: 'Воскресенье' },
+    ];
+
+    return dayMappings.map(({ key, idKey, name }) => {
+      const isWorking = schedule[idKey as keyof Schedule] !== 0;
+      const daySchedule = schedule[key as keyof Schedule] as any;
+
+      if (!isWorking) {
+        return {
+          day: name,
+          workHours: 'Выходной',
+          lunchHours: '-',
+          isWorking: false
+        };
+      }
+
+      const workHours = `${formatTime(daySchedule.starttime)} - ${formatTime(daySchedule.endtime)}`;
+
+      const hasLunchBreak = daySchedule.lunchbreak_start !== '00:00:00' &&
+        daySchedule.lunchbreak_end !== '00:00:00';
+
+      const lunchHours = hasLunchBreak
+        ? `${formatTime(daySchedule.lunchbreak_start)} - ${formatTime(daySchedule.lunchbreak_end)}`
+        : 'Нет перерыва';
+
+      return {
+        day: name,
+        workHours,
+        lunchHours,
+        isWorking: true,
+        startTime: daySchedule.starttime,
+        endTime: daySchedule.endtime,
+        lunchStart: daySchedule.lunchbreak_start,
+        lunchEnd: daySchedule.lunchbreak_end
+      };
+    });
+  };
+
+  const getCurrentDayIndex = (): number => {
     const today = new Date().getDay();
     return today === 0 ? 6 : today - 1;
   };
 
   const currentDayIndex = getCurrentDayIndex();
+  const colleagueSchedule = getColleagueSchedule();
+
+  useEffect(() => {
+    const updateStatus = () => {
+      setCurrentStatus(getCurrentStatus());
+    };
+
+    updateStatus();
+
+    const interval = setInterval(updateStatus, 60000);
+
+    return () => clearInterval(interval);
+  }, [selectedColleague]);
 
   const parseDate = (dateString?: string): string => {
     if (!dateString) return 'Не указано';
 
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
 
-    return `${day} ${month} ${year}`;
+      return `${day} ${month} ${year}`;
+    } catch (error) {
+      return 'Неверный формат даты';
+    }
   };
 
   const handleEditColleague = () => {
@@ -66,14 +192,12 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
 
   const handleEditSubmit = (formData: any) => {
     console.log('Данные для редактирования сотрудника:', formData);
-    // Здесь будет логика обновления сотрудника
     setIsEditModalOpen(false);
     onColleagueEdit?.(formData);
   };
 
   const handleDeleteSubmit = () => {
     console.log('Удаление сотрудника:', selectedColleague?.id);
-    // Здесь будет логика удаления сотрудника
     setIsDeleteModalOpen(false);
     if (selectedColleague) {
       onColleagueDelete?.(selectedColleague.id);
@@ -86,6 +210,19 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
 
   const handleCloseDeleteModal = () => {
     setIsDeleteModalOpen(false);
+  };
+
+  const getStatusClass = (status: string): string => {
+    switch (status) {
+      case 'На работе':
+        return 'status-working';
+      case 'Обед':
+        return 'status-lunch';
+      case 'Отсутствует':
+        return 'status-absent';
+      default:
+        return 'status-unknown';
+    }
   };
 
   return (
@@ -147,7 +284,7 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
                             </Popup>
                           </div>
                         )}
-                        <h2 className="colleague-info-name">{selectedColleague.name}</h2>
+                        <h2 className="colleague-info-name">{selectedColleague.lname} {selectedColleague.fname} {selectedColleague.mname}</h2>
                       </div>
                     </div>
                     <div className="colleague-info-position">
@@ -161,15 +298,17 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
                   <div className="contact-info">
                     <div className="contact-row">
                       <span className="contact-label">Офис:</span>
-                      <span className="contact-value">{selectedColleague.department || 'Не указан'}</span>
+                      <span className="contact-value">{selectedColleague.employee_departments?.[0] ? selectedColleague.employee_departments[0].office : 'Не указан'}</span>
                     </div>
                     <div className="contact-row">
                       <span className="contact-label">Статус:</span>
-                      <span className="contact-value">{selectedColleague.isOnline ? 'Онлайн' : 'Офлайн'}</span>
+                      <span className={`contact-value status-indicator ${getStatusClass(currentStatus)}`}>
+                        {currentStatus}
+                      </span>
                     </div>
                     <div className="contact-row">
                       <span className="contact-label">Дата рождения:</span>
-                      <span className="contact-value">{parseDate(selectedColleague.birthDate)}</span>
+                      <span className="contact-value">{parseDate(selectedColleague.dob)}</span>
                     </div>
                     <div className="contact-row">
                       <span className="contact-label">Телефон:</span>
@@ -188,22 +327,26 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
             <div className="schedule-section">
               <h3 className="section-title">Расписание</h3>
               <div className="daily-schedule-container">
-                {dailySchedule.map((schedule, index) => (
+                {colleagueSchedule.map((schedule, index) => (
                   <div
                     key={schedule.day}
-                    className={`daily-schedule-card ${index === currentDayIndex ? 'current-day' : ''}`}
+                    className={`daily-schedule-card ${index === currentDayIndex ? 'current-day' : ''} ${!schedule.isWorking ? 'day-off' : ''}`}
                   >
                     <div className="schedule-content">
-                      <div className={`schedule-day ${index === currentDayIndex ? 'current-day' : ''}`}>
+                      <div className={`schedule-day ${index === currentDayIndex ? 'current-day' : ''} ${!schedule.isWorking ? 'day-off' : ''}`}>
                         {schedule.day}
                       </div>
                       <div className="time-slot">
-                        <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''}`}>{schedule.workHours}</div>
+                        <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''} ${!schedule.isWorking ? 'day-off' : ''}`}>
+                          {schedule.workHours}
+                        </div>
                       </div>
-                      <div className="time-slot">
-                        <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''}`}>Обед:</div>
-                        <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''}`}>{schedule.lunchHours}</div>
-                      </div>
+                      {schedule.isWorking && (
+                        <div className="time-slot">
+                          <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''}`}>Обед:</div>
+                          <div className={`schedule-text-primary ${index === currentDayIndex ? 'current-day' : ''}`}>{schedule.lunchHours}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -231,7 +374,7 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
             </div>
             <div style={{ padding: '20px 24px' }}>
               <p style={{ fontSize: '16px', marginBottom: '20px' }}>
-                Вы уверены, что хотите удалить сотрудника "{selectedColleague?.name}"? Это действие нельзя отменить.
+                Вы уверены, что хотите удалить сотрудника "{selectedColleague?.lname} {selectedColleague?.fname} {selectedColleague?.mname}"? Это действие нельзя отменить.
               </p>
               <div className="modal-actions">
                 <div className="action-buttons">

@@ -1,11 +1,19 @@
-import { TaskItem, TasksListProps, ListNode } from '../types/types';
+import { TaskItem, ListNode, ReleaseItem, ProjectItem } from '../types/types';
 import List from '../List/List';
 import { useMemo } from 'react';
 
-const generateDeterministicColor = (id: string): string => {
+type TasksListProps = {
+  items: ReleaseItem[];
+  onItemClick?: (item: TaskItem) => void;
+  onInfoClick?: (item: ListNode) => void;
+  statuses?: Array<{ id: number; alias: string }>;
+};
+
+const generateDeterministicColor = (id: number): string => {
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  const idStr = id.toString();
+  for (let i = 0; i < idStr.length; i++) {
+    hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
   }
 
   const colors = [
@@ -17,31 +25,42 @@ const generateDeterministicColor = (id: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-interface TasksListPropsWithInfo extends TasksListProps {
-  onInfoClick?: (item: ListNode) => void;
-}
+const getStatusAlias = (statusId: number, statuses?: Array<{ id: number; alias: string }>): string => {
+  if (!statuses) return `Статус ${statusId}`;
+  const status = statuses.find(s => s.id === statusId);
+  return status?.alias || `Статус ${statusId}`;
+};
 
-const TasksList = ({ items, onItemClick, onInfoClick }: TasksListPropsWithInfo) => {
+const TasksList = ({ items, onItemClick, onInfoClick, statuses }: TasksListProps) => {
   const listItems: ListNode[] = useMemo(() => {
     return items.map(release => ({
-      ...release,
+      id: `release-${release.id}`,
+      title: release.name,
       type: 'release',
-      children: release.children?.map(project => ({
-        ...project,
+      data: release,
+
+      children: release.projects?.map(project => ({
+        id: `project-${project.id}`,
+        title: project.name,
         type: 'project',
-        children: project.children?.map(task => ({
-          ...task,
+        data: project,
+
+        children: project.tasks?.map(task => ({
+          id: `task-${task.id}`,
+          title: task.name,
           type: 'task',
+          data: task,
+          deadline: task.end_date,
           color: generateDeterministicColor(task.id),
-          status: task.status || 'primary'
+          status: getStatusAlias(task.status_id, statuses)
         }))
       }))
-    })) as ListNode[];
-  }, [items]);
+    }));
+  }, [items, statuses]);
 
-  const handleItemClick = (item: ListNode) => {
-    if (item.type === 'task') {
-      onItemClick?.(item as TaskItem);
+  const handleItemClick = (node: ListNode) => {
+    if (node.type === 'task' && node.data) {
+      onItemClick?.(node.data as TaskItem);
     }
   };
 
@@ -51,8 +70,8 @@ const TasksList = ({ items, onItemClick, onInfoClick }: TasksListPropsWithInfo) 
       onItemClick={handleItemClick}
       onInfoClick={onInfoClick}
       indentSize={15}
-      className="tasks-tree"
       defaultExpanded={false}
+      className="tasks-tree"
     />
   );
 };

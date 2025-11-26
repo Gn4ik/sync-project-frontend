@@ -21,65 +21,113 @@ export type Office = {
   manager: string;
 }
 
-export type TaskItem = {
-  id: string;
-  title: string;
-  isExpanded?: boolean;
-  isActive?: boolean;
-  executor: number;
-  status: TaskStatus;
-  createdDate: string;
-  deadline: string;
-  description: string;
-  canEdit?: boolean;
+export type Schedule = {
+  sun_id: number;
+  mon_id: number;
+  wed_id: number;
+  fri_id: number;
+  id: number;
+  tue_id: number;
+  thu_id: number;
+  sat_id: number;
+  fri: WorkDay;
+  tue: WorkDay;
+  sat: WorkDay;
+  wed: WorkDay;
+  sun: WorkDay;
+  thu: WorkDay;
+  mon: WorkDay;
 }
 
-export type ReleaseItem = {
-  id: string;
-  title: string;
-  children?: ProjectItem[];
+export type TaskItem = {
+  id: number;
+  created_at: string;
+  end_date: string;
+  description: string;
+  project_id: number;
+  creator_id: number;
+  executor_id: number;
+  start_date: string;
+  name: string;
+  status_id: number;
+  task_comments: any[];
+  task_files: any[];
   isExpanded?: boolean;
   isActive?: boolean;
+  canEdit?: boolean;
+  status: Status;
+}
+
+export type Status = {
+  alias: string;
+  id: number;
+}
+
+export type Meeting = {
+  name: string,
+  description: string;
+  date: string;
+  id: number;
+  creator_id: number;
+  link: string;
+}
+
+export type WorkDay = {
+  endtime: string;
+  starttime: string;
+  launchbreak_end: string;
+  launchbreak_start: string;
+}
+
+export type Department = {
+  department_id: number;
+  employee_id: number;
+  office: string;
+}
+
+export type EmployeeMeeteng = {
+  employee_id: number;
+  meeting_id: number;
+  meeting: Meeting;
 }
 
 export type ProjectItem = {
-  id: string;
-  title: string;
-  children?: TaskItem[];
+  id: number;
+  created_at: string;
+  status_id: number;
+  name: string;
+  description: string;
+  manager_id: number;
+  release_id: number;
+  tasks: TaskItem[];
   isExpanded?: boolean;
   isActive?: boolean;
-  description?: string;
 }
 
-export type TasksListProps = {
-  items: ReleaseItem[];
-  onItemClick?: (item: TaskItem) => void;
-}
-
-export type TaskInfoProps = {
-  selectedTask?: TaskItem | null;
-  userRole: string;
+export type ReleaseItem = {
+  id: number;
+  description: string;
+  status_id: number;
+  name: string;
+  version: string;
+  projects: ProjectItem[];
+  isExpanded?: boolean;
+  isActive?: boolean;
 }
 
 export interface Colleague {
   id: string;
-  name: string;
+  fname: string;
+  lname: string;
+  mname: string;
   position: string;
-  department: string;
-  isOnline: boolean;
   avatar?: string;
-  birthDate?: string;
+  dob?: string;
   phone?: string;
   email?: string;
-}
-
-export interface ColleagueInfoProps {
-  selectedColleague: Colleague | null;
-}
-
-export type ColleagueListProps = {
-  items: Colleague[];
-  onItemClick?: (colleague: Colleague) => void;
+  employee_meetengs: null;
+  schedule: Schedule;
+  employee_departments?: Department[];
 }
 
 export type ListNode = {
@@ -124,3 +172,16 @@ export type TaskFormData = {
   deadline: string;
   description: string;
 }
+
+export const getTaskStatusFromAlias = (alias: string): TaskStatus => {
+  const statusMap: Record<string, TaskStatus> = {
+    'Создан': 'to-execution',
+    'Активен': 'on-work',
+    'Приостановлен': 'stopped',
+    'Завершен': 'completed',
+    'Отменен': 'closed',
+    'Согласовывается': 'on-review'
+  };
+
+  return statusMap[alias] || 'primary';
+};

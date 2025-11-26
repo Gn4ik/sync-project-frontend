@@ -5,9 +5,12 @@ import logout_logo from '../../icons/logout.svg'
 import { useEffect, useRef, useState } from 'react';
 import Popup from '../Popup/Popup';
 import './AppHeader.css'
+import { useNavigate } from 'react-router-dom';
+
+const URL = process.env.HOST; 
 
 interface AppHeaderProps {
-  userRole?: 'user' | 'manager' | 'admin';
+  userRole?: 'user' | 'manager' | 'admin' | null;
   onCalendarClick?: () => void;
   isCalendarActive?: boolean;
 }
@@ -17,6 +20,8 @@ const AppHeader = ({ userRole = 'user', onCalendarClick, isCalendarActive = fals
   const [buttonActive, setButtonActive] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const navigate = useNavigate();
 
   const toggleNotifications = () => {
     const newState = !isPopupOpen;
@@ -29,7 +34,23 @@ const AppHeader = ({ userRole = 'user', onCalendarClick, isCalendarActive = fals
     setButtonActive(false);
   }
 
-  const logOut = () => {
+  const logOut = async () => {
+
+    localStorage.removeItem('auth_token');
+
+    try {
+      await fetch(`${URL}/auth/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0'
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    navigate('/login');
+    window.location.reload();
   }
 
   useEffect(() => {

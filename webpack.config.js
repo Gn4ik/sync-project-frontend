@@ -1,6 +1,7 @@
 const path = require('path');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: path.resolve(__dirname, './src/index.tsx'),
@@ -52,7 +53,8 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: './public/index.html'
-    })
+    }),
+    new Dotenv()
   ],
   resolve: {
     extensions: [
@@ -71,7 +73,8 @@ module.exports = {
     alias: {
       '@pages': path.resolve(__dirname, './src/pages'),
       '@components': path.resolve(__dirname, './src/components'),
-      '@styles': path.resolve(__dirname, './src/styles')
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@utils': path.resolve(__dirname, './src/utils')
     }
   },
   output: {

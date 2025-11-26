@@ -5,7 +5,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (formData: any) => void;
-  type: 'release' | 'project' | 'task' | 'meeting' | 'colleague';
+  type: 'release' | 'project' | 'task' | 'meeting' | 'colleague' | 'office';
   mode?: 'create' | 'edit';
   initialData?: any;
 }
@@ -53,7 +53,11 @@ const Modal = ({
 
     participants: [] as string[],
     meetingDate: '',
-    meetingTime: ''
+    meetingTime: '',
+
+    // Поля для офиса
+    officeName: '',
+    manager: ''
   });
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,7 +86,9 @@ const Modal = ({
           meetingDate: initialData.meetingDate || '',
           meetingTime: initialData.meetingTime || '',
           project: initialData.project || '',
-          assignee: initialData.assignee || ''
+          assignee: initialData.assignee || '',
+          officeName: initialData.officeName || initialData.name || '',
+          manager: initialData.manager || ''
         });
       } else {
         setFormData({
@@ -103,7 +109,9 @@ const Modal = ({
           meetingDate: '',
           meetingTime: '',
           project: '',
-          assignee: ''
+          assignee: '',
+          officeName: '',
+          manager: ''
         });
       }
       setSearchTerm('');
@@ -116,7 +124,8 @@ const Modal = ({
     project: mode === 'edit' ? 'Редактировать проект' : 'Создать проект',
     task: mode === 'edit' ? 'Редактировать задачу' : 'Создать задачу',
     meeting: mode === 'edit' ? 'Редактировать встречу' : 'Создать встречу',
-    colleague: mode === 'edit' ? 'Редактировать сотрудника' : 'Добавить сотрудника'
+    colleague: mode === 'edit' ? 'Редактировать сотрудника' : 'Добавить сотрудника',
+    office: mode === 'edit' ? 'Редактировать офис' : 'Добавить офис'
   };
 
   const filteredColleagues = mockColleagues.filter(colleague =>
@@ -209,6 +218,36 @@ const Modal = ({
         <form onSubmit={handleSubmit}>
           <div className='form-wrapper'>
             <div className="form-section">
+              {/* Поля для офиса */}
+              {type === 'office' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Название офиса:</label>
+                    <input
+                      type="text"
+                      className="form-input form-text"
+                      placeholder="Введите название офиса"
+                      value={formData.officeName}
+                      onChange={(e) => handleChange('officeName', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">ФИО руководителя:</label>
+                    <input
+                      type="text"
+                      className="form-input form-text"
+                      placeholder="Введите ФИО руководителя"
+                      value={formData.manager}
+                      onChange={(e) => handleChange('manager', e.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Поля для сотрудника */}
               {type === 'colleague' && (
                 <>
                   <div className="form-group">
@@ -299,7 +338,8 @@ const Modal = ({
                 </>
               )}
 
-              {type !== 'colleague' && (
+              {/* Остальные типы */}
+              {(type !== 'colleague' && type !== 'office') && (
                 <>
                   <div className="form-group">
                     <label className="form-label">Название:</label>
@@ -475,7 +515,8 @@ const Modal = ({
               )}
             </div>
 
-            {type !== 'colleague' && (
+            {/* Описание (для всех типов кроме colleague и office) */}
+            {(type !== 'colleague' && type !== 'office') && (
               <div className="form-group-description">
                 <label className="form-label description-label">Описание:</label>
                 <textarea
@@ -495,7 +536,8 @@ const Modal = ({
                 Отменить
               </button>
               <button type="submit" className="btn-primary">
-                {mode === 'edit' ? 'Сохранить' : type === 'colleague' ? 'Добавить сотрудника' : 'Добавить'}
+                {mode === 'edit' ? 'Сохранить' :
+                  type === 'colleague' ? 'Добавить сотрудника' : 'Добавить'}
               </button>
             </div>
           </div>

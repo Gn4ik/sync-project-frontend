@@ -2,18 +2,57 @@ import AppHeader from "../AppHeader/AppHeader";
 import '@styles/styles.css'
 import TaskInfo from "../TaskInfo/TaskInfo";
 import SideBar from "../SideBar/SideBar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Colleague, TaskItem } from "../types/types";
 import ColleagueInfo from "../ColleagueInfo/ColleagueInfo";
 import Calendar from "../Calendar/Calendar";
 import CalendarEvents from "../CalendarEvents/CalendarEvents";
+
+const URL = process.env.HOST;
 
 const MainPage = () => {
 	const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 	const [selectedColleague, setSelectedColleague] = useState<Colleague | null>(null);
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
 
-	const [currentUserRole] = useState<'user' | 'manager' | 'admin'>('user');
+	const [currentUserRole, setCurrentUserRole] = useState<'user' | 'manager' | 'admin' | null>(null);
+	const [currentUserId, setCurrentUserId] = useState<number>(0);
+
+	const checkRole = async () => {
+		try {
+			const token = localStorage.getItem('auth_token');
+			if (!token)
+				return;
+
+			const response = await fetch(`${URL}/auth/me/`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					'ngrok-skip-browser-warning': '0',
+					"SyncAuthToken": token,
+				}
+			});
+
+			const data = await response.json();
+
+			const role = data.role?.description;
+			const id = data.id;
+			if (role === 'user' || role === 'manager' || role === 'admin') {
+				setCurrentUserRole(role);
+				setCurrentUserId(id);
+			} else {
+				console.warn('Unknown role:', role);
+				setCurrentUserRole(null);
+			}
+		} catch (error) {
+			console.error('Token check failed:', error);
+		} finally {
+		}
+	};
+
+	useEffect(() => {
+		checkRole();
+	}, []);
 
 	const handleTaskSelect = (task: TaskItem) => {
 		setSelectedTask(task);
@@ -45,6 +84,7 @@ const MainPage = () => {
 					onTaskSelect={handleTaskSelect}
 					onColleagueSelect={handleColleagueSelect}
 					userRole={currentUserRole}
+					userId={currentUserId}
 				/>
 
 				{selectedTask ? (
