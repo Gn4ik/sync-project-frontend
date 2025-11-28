@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './List.css';
 import { Colleague, ListNode, ListProps } from '@types';
+import '../../styles/styles';
 
 const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode => {
   return {
@@ -71,8 +72,6 @@ const List = ({
         return items.map(item => {
           if (item.id === id) {
             const newExpandedState = !item.isExpanded;
-            console.log(item.isExpanded);
-            console.log(item.title);
             const updatedItem = { ...item, isExpanded: newExpandedState };
             onItemToggle?.(updatedItem);
             return updatedItem;
@@ -186,7 +185,7 @@ const List = ({
         </div>
       );
     }
-
+    
     return (
       <div
         key={item.id}
@@ -205,10 +204,9 @@ const List = ({
           }}
         >
           <div className="tree-item-content">
-            {isTask && item.color && (
+            {isTask && item.status && (
               <span
-                className="task-color-marker"
-                style={{ backgroundColor: item.color }}
+                className={`task-color-marker status-${item.status}`}
               />
             )}
 

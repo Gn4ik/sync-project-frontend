@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './TaskInfo.css';
 import '@styles/styles.css';
 import linkIcon from '@icons/LinkIcon.svg';
 import Calendar from '@components/Calendar/Calendar';
 import Popup from '@components/Popup/Popup';
 import Modal from '@components/Modal/Modal';
-import { TaskItem, TaskStatus } from '@types';
+import { Colleague, ProjectItem, Status, TaskItem, TaskStatus } from '@types';
 
 interface TaskInfoUIProps {
   selectedTask?: TaskItem | null;
   userRole: string | null;
-  statuses?: Array<{ id: number; alias: string }>;
+  statuses?: Status[]
   taskStatus: TaskStatus;
-  displayStatus: string;
   lineClass: string;
   backgroundClass: string;
   isDropdownOpen: boolean;
@@ -23,6 +22,8 @@ interface TaskInfoUIProps {
   managerButtonRef: React.RefObject<HTMLButtonElement>;
   dropdownRef: React.RefObject<HTMLDivElement>;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
+  projects: ProjectItem[];
+  colleagues: Colleague[];
   parseDate: (dateString: string) => string;
   onTextareaInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onStatusChange: (newStatusId: number) => void;
@@ -42,7 +43,6 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   userRole,
   statuses,
   taskStatus,
-  displayStatus,
   lineClass,
   backgroundClass,
   isDropdownOpen,
@@ -53,6 +53,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   managerButtonRef,
   dropdownRef,
   textareaRef,
+  projects,
+  colleagues,
   parseDate,
   onTextareaInput,
   onStatusChange,
@@ -66,6 +68,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   onCloseEditModal,
   onCloseDeleteModal
 }) => {
+
   if (!selectedTask) {
     return (
       <div className="task-info-container">
@@ -75,6 +78,14 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
       </div>
     );
   }
+
+  const [displayStatus, setDisplayStatus] = useState<string>('');
+  
+  useEffect(() => {
+    if (selectedTask && selectedTask.status) {
+      setDisplayStatus(selectedTask.status.alias);
+    }
+  }, [selectedTask]);
 
   return (
     <>
@@ -159,7 +170,10 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                             key={statusItem.id}
                             className={`dropdown-item ${selectedTask.status_id === statusItem.id ? 'dropdown-item-active' : ''
                               }`}
-                            onClick={() => onStatusChange(statusItem.id)}
+                            onClick={() => {
+                              onStatusChange(statusItem.id);
+                              setDisplayStatus(statusItem.alias);
+                            }}
                           >
                             {statusItem.alias}
                           </div>
@@ -196,9 +210,17 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
 
             <div className='comment-section'>
               <div className='comment-list'>
-                <p>
-                  COMMENT
-                </p>
+                {selectedTask.task_comments.map(comment => (
+                  <div className="comment-container">
+                    <div className="comment-header">
+                      <div className="author-name">{comment.author.fname} {comment.author.lname}</div>
+                      <div className="comment-date">{parseDate(comment.created_at)}</div>
+                    </div>
+                    <div className="comment-text">
+                      {comment.text}
+                    </div>
+                  </div>
+                ))}
               </div>
               <form className="comment-form">
                 <div className={`input-wrapper ${hasText ? 'has-text' : ''}`}>
@@ -232,6 +254,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
         type="task"
         mode="edit"
         initialData={selectedTask}
+        projects={projects}
+        colleagues={colleagues}
       />
 
       {isDeleteModalOpen && (

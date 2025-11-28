@@ -182,15 +182,6 @@
   transition: background-color 0.2s;
 }
 
-.manager-popup-item svg,
-.manager-popup-item svg path {
-  fill: #2D2D2D80;
-}
-
-.manager-popup-item:hover svg path {
-  fill: #2D2D2D;
-}
-
 .dropdown-item:last-child {
   border-bottom: none;
 }
@@ -402,4 +393,47 @@
 
 .width-100 {
   width: 100%;
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.comment-container {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f1f1;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.author-name {
+  font-weight: 700; 
+  font-size: 16px;
+  color: #0B57D0; 
+}
+
+.comment-date {
+  font-size: 14px;
+  font-weight: 300;
+  color: #0B57D0;
+  line-height: 1.1;
+}
+
+.comment-text {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #2D2D2D;
+  white-space: pre-wrap;
 }

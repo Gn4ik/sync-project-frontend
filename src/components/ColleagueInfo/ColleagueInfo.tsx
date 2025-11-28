@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Colleague, Schedule } from '@types';
+import { Colleague, ProjectItem, Schedule } from '@types';
 import ColleagueInfoUI from '@ui/ColleagueInfo';
 
 interface ColleagueInfoProps {
@@ -7,6 +7,8 @@ interface ColleagueInfoProps {
   userRole: 'executor' | 'manager' | 'admin' | null;
   onColleagueEdit?: (colleague: Colleague) => void;
   onColleagueDelete?: (colleagueId: string) => void;
+  projects: ProjectItem[];
+  colleagues: Colleague[];
 }
 
 interface ScheduleDay {
@@ -20,7 +22,7 @@ interface ScheduleDay {
   lunchEnd?: string;
 }
 
-const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleagueDelete }: ColleagueInfoProps) => {
+const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleagueDelete, projects, colleagues }: ColleagueInfoProps) => {
   const months = [
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
@@ -240,6 +242,8 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
       isEditModalOpen={isEditModalOpen}
       isDeleteModalOpen={isDeleteModalOpen}
       adminButtonRef={adminButtonRef}
+      projects={projects}
+      colleagues={colleagues}
       parseDate={parseDate}
       getStatusClass={getStatusClass}
       onToggleAdminPopup={handleToggleAdminPopup}

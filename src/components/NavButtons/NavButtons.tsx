@@ -9,6 +9,7 @@ import filtersIcon from '@icons/filters.svg';
 import './NavButtons.css';
 import Modal from "../Modal/Modal";
 import UserModal from "../UserModal/UserModal";
+import { Colleague, ProjectItem } from "@components/types";
 
 interface NavButtonsProps {
   activeList: 'tasks' | 'colleagues';
@@ -16,6 +17,8 @@ interface NavButtonsProps {
   onFilterChange: (filter: string) => void;
   currentFilter: string;
   userRole: 'executor' | 'manager' | 'admin' | null;
+  projects: ProjectItem[];
+  colleagues: Colleague[];
 }
 
 const managerStatusFilters = [
@@ -28,7 +31,7 @@ const managerStatusFilters = [
   { key: 'closed', label: 'Отменены' },
 ];
 
-const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter }: NavButtonsProps) => {
+const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter, projects, colleagues }: NavButtonsProps) => {
   const [popup1Open, setIsPopup1Open] = useState(false);
   const [popup2Open, setIsPopup2Open] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -257,6 +260,8 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type="task"
+        projects={projects}
+        colleagues={colleagues}
       />
 
       <Modal
@@ -264,6 +269,8 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type="project"
+        projects={projects}
+        colleagues={colleagues}
       />
 
       <Modal
@@ -271,6 +278,8 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type="release"
+        projects={projects}
+        colleagues={colleagues}
       />
 
       <Modal
@@ -278,6 +287,8 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type="meeting"
+        projects={projects}
+        colleagues={colleagues}
       />
 
       <UserModal
@@ -291,6 +302,8 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         type='office'
+        projects={projects}
+        colleagues={colleagues}
       />
     </>
   );

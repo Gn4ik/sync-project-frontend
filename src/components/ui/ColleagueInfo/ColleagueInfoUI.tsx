@@ -4,7 +4,7 @@ import '@styles/styles.css';
 import Calendar from '@components/Calendar/Calendar';
 import Popup from '@components/Popup/Popup';
 import Modal from '@components/Modal/Modal';
-import { Colleague } from '@types';
+import { Colleague, ProjectItem } from '@types';
 
 interface ScheduleDay {
   day: string;
@@ -27,6 +27,8 @@ interface ColleagueInfoUIProps {
   isEditModalOpen: boolean;
   isDeleteModalOpen: boolean;
   adminButtonRef: React.RefObject<HTMLButtonElement>;
+  projects: ProjectItem[];
+  colleagues: Colleague[];
   parseDate: (dateString?: string) => string;
   getStatusClass: (status: string) => string;
   onToggleAdminPopup: () => void;
@@ -49,6 +51,8 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
   isEditModalOpen,
   isDeleteModalOpen,
   adminButtonRef,
+  projects,
+  colleagues,
   parseDate,
   getStatusClass,
   onToggleAdminPopup,
@@ -206,6 +210,8 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
         type="colleague"
         mode="edit"
         initialData={selectedColleague}
+        projects={projects}
+        colleagues={colleagues}
       />
 
       {isDeleteModalOpen && (

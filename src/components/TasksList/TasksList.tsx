@@ -1,4 +1,4 @@
-import { TaskItem, ListNode, ReleaseItem, ProjectItem } from '@types';
+import { TaskItem, ListNode, ReleaseItem, ProjectItem, getTaskStatusFromAlias } from '@types';
 import List from '../List/List';
 import { useMemo } from 'react';
 
@@ -6,32 +6,9 @@ type TasksListProps = {
   items: ReleaseItem[];
   onItemClick?: (item: TaskItem) => void;
   onInfoClick?: (item: ListNode) => void;
-  statuses?: Array<{ id: number; alias: string }>;
 };
 
-const generateDeterministicColor = (id: number): string => {
-  let hash = 0;
-  const idStr = id.toString();
-  for (let i = 0; i < idStr.length; i++) {
-    hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
-  ];
-
-  return colors[Math.abs(hash) % colors.length];
-};
-
-const getStatusAlias = (statusId: number, statuses?: Array<{ id: number; alias: string }>): string => {
-  if (!statuses) return `Статус ${statusId}`;
-  const status = statuses.find(s => s.id === statusId);
-  return status?.alias || `Статус ${statusId}`;
-};
-
-const TasksList = ({ items, onItemClick, onInfoClick, statuses }: TasksListProps) => {
+const TasksList = ({ items, onItemClick, onInfoClick }: TasksListProps) => {
   const listItems: ListNode[] = useMemo(() => {
     return items.map(release => ({
       id: `release-${release.id}`,
@@ -51,12 +28,11 @@ const TasksList = ({ items, onItemClick, onInfoClick, statuses }: TasksListProps
           type: 'task',
           data: task,
           deadline: task.end_date,
-          color: generateDeterministicColor(task.id),
-          status: getStatusAlias(task.status_id, statuses)
+          status: getTaskStatusFromAlias(task.status.alias)
         }))
       }))
     }));
-  }, [items, statuses]);
+  }, [items]);
 
   const handleItemClick = (node: ListNode) => {
     if (node.type === 'task' && node.data) {

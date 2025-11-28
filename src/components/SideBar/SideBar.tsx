@@ -16,9 +16,23 @@ interface SideBarProps {
   userRole: 'executor' | 'manager' | 'admin' | null;
   userId: number;
   onStatusesLoaded?: (statuses: Array<{ id: number; alias: string }>) => void;
+  onReleasesLoaded?: (releases: ReleaseItem[]) => void;
+  releasesData?: ReleaseItem[];
+  projects: ProjectItem[];
+  colleagues: Colleague[];
 }
 
-const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatusesLoaded }: SideBarProps) => {
+const SideBar = ({
+  onTaskSelect,
+  onColleagueSelect,
+  userRole,
+  userId,
+  onStatusesLoaded,
+  onReleasesLoaded,
+  releasesData,
+  projects,
+  colleagues
+}: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
   const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
@@ -29,7 +43,6 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
     data: null
   });
 
-  const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
   const [employeesData, setEmployeesData] = useState<Colleague[]>([]);
   const [departmentsData, setDepartmentsData] = useState<any[]>([]);
 
@@ -60,7 +73,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': '0',
-        "SyncAuthToken": token,
+        "Authorization": `Bearer ${token}`,
       }
     });
 
@@ -72,7 +85,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
   };
 
   const loadReleasesData = async () => {
-    if (hasLoaded.current.tasks) {
+    if (hasLoaded.current.tasks && releasesData && releasesData.length > 0) {
       return releasesData;
     }
 
@@ -80,8 +93,8 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
       setLoading(prev => ({ ...prev, tasks: true }));
       const releases = await fetchData('/releases/all/');
       console.log('Releases loaded:', releases);
-      setReleasesData(releases);
       hasLoaded.current.tasks = true;
+      onReleasesLoaded?.(releases);
       return releases;
     } catch (error) {
       console.error('Releases loading failed:', error);
@@ -90,6 +103,14 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
       setLoading(prev => ({ ...prev, tasks: false }));
     }
   };
+
+  const currentReleasesData = releasesData && releasesData.length > 0 ? releasesData : (() => {
+    const loadData = async () => {
+      const data = await loadReleasesData();
+      return data || [];
+    };
+    return [];
+  })();
 
   const loadEmployees = async () => {
     if (hasLoaded.current.colleagues) {
@@ -250,7 +271,7 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
     return filterByStatus(data);
   };
 
-  const filteredTasks = getFilteredTasks(releasesData);
+  const filteredTasks = getFilteredTasks(currentReleasesData);
 
   const handleTaskClick = (task: TaskItem) => {
     onTaskSelect(task);
@@ -305,6 +326,8 @@ const SideBar = ({ onTaskSelect, onColleagueSelect, userRole, userId, onStatuses
         onFilterChange={handleFilterChange}
         currentFilter={taskFilter}
         userRole={userRole}
+        projects={projects}
+        colleagues={colleagues}
       />
 
       {userRole === 'admin' ? (

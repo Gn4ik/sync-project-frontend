@@ -3,7 +3,7 @@ import '@styles/styles.css'
 import TaskInfo from "../TaskInfo/TaskInfo";
 import SideBar from "../SideBar/SideBar";
 import { useEffect, useState } from "react";
-import { Colleague, TaskItem } from "@types";
+import { Colleague, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
 import ColleagueInfo from "../ColleagueInfo/ColleagueInfo";
 import Calendar from "../Calendar/Calendar";
 import CalendarEvents from "../CalendarEvents/CalendarEvents";
@@ -14,10 +14,74 @@ const MainPage = () => {
 	const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 	const [selectedColleague, setSelectedColleague] = useState<Colleague | null>(null);
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
-	const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
+	const [statusesData, setStatusesData] = useState<Status[]>([]);
 
 	const [currentUserRole, setCurrentUserRole] = useState<'executor' | 'manager' | 'admin' | null>(null);
 	const [currentUserId, setCurrentUserId] = useState<number>(0);
+	const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
+
+	const [projects, setProjectsData] = useState<ProjectItem[]>([]);
+	const [colleagues, setEmployeesData] = useState<Colleague[]>([]);
+
+	const updateTaskInList = (taskId: number, updates: Partial<TaskItem>) => {
+		setReleasesData(prevReleases => {
+			return prevReleases.map(release => ({
+				...release,
+				projects: release.projects?.map(project => ({
+					...project,
+					tasks: project.tasks?.map(task =>
+						task.id === taskId ? { ...task, ...updates } : task
+					)
+				}))
+			}));
+		});
+	};
+
+	const fetchProjects = async () => {
+		try {
+			const token = localStorage.getItem('auth_token');
+			if (!token) return;
+
+			const response = await fetch(`${URL}/projects/all/`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					'ngrok-skip-browser-warning': '0',
+					"Authorization": `Bearer ${token}`,
+				}
+			});
+
+			if (response.ok) {
+				const projects = await response.json();
+				setProjectsData(projects);
+			}
+		} catch (error) {
+			console.error('Error fetching projects:', error);
+		}
+	};
+
+	const fetchEmployees = async () => {
+		try {
+			const token = localStorage.getItem('auth_token');
+			if (!token) return;
+
+			const response = await fetch(`${URL}/employees/all/`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					'ngrok-skip-browser-warning': '0',
+					"Authorization": `Bearer ${token}`,
+				}
+			});
+
+			if (response.ok) {
+				const employees = await response.json();
+				setEmployeesData(employees);
+			}
+		} catch (error) {
+			console.error('Error fetching employees:', error);
+		}
+	};
 
 	const checkRole = async () => {
 		try {
@@ -30,7 +94,7 @@ const MainPage = () => {
 				headers: {
 					'Content-Type': 'application/json',
 					'ngrok-skip-browser-warning': '0',
-					"SyncAuthToken": token,
+					"Authorization": `Bearer ${token}`,
 				}
 			});
 
@@ -53,6 +117,10 @@ const MainPage = () => {
 
 	useEffect(() => {
 		checkRole();
+		const loadAllData = async () => {
+			await Promise.all([fetchProjects(), fetchEmployees()]);
+		};
+		loadAllData();
 	}, []);
 
 	const handleTaskSelect = (task: TaskItem) => {
@@ -81,40 +149,50 @@ const MainPage = () => {
 	const handleStatusChange = async (taskId: number, newStatusId: number) => {
 		try {
 			const token = localStorage.getItem('auth_token');
-			if (!token) return;
-
-			console.log(`Changing task ${taskId} status to ${newStatusId}`);
-
-			const response = await fetch(`${URL}/tasks/${taskId}/`, {
-				method: 'PATCH',
+			if (!token) {
+				return;
+			}
+			const response = await fetch(`${URL}/tasks/update/`, {
+				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 					'ngrok-skip-browser-warning': '0',
-					"SyncAuthToken": token,
+					"Authorization": `Bearer ${token}`,
 				},
 				body: JSON.stringify({
+					id: taskId,
 					status_id: newStatusId
 				})
 			});
 
-			if (!response.ok) {
-				throw new Error('Failed to update task status');
+			if (response.ok) {
+				const newStatus = statusesData.find(status => status.id === newStatusId);
+
+				if (newStatus) {
+					updateTaskInList(taskId, {
+						status_id: newStatusId,
+						status: newStatus
+					});
+
+					if (selectedTask && selectedTask.id === taskId) {
+						setSelectedTask(prev => prev ? {
+							...prev,
+							status_id: newStatusId,
+							status: newStatus
+						} : null);
+					}
+				}
+			} else {
+				console.error('Ошибка при обновлении статуса');
 			}
-
-			const updatedTask = await response.json();
-			console.log('Task status updated:', updatedTask);
-
-			if (selectedTask && selectedTask.id === taskId) {
-				setSelectedTask(prev => prev ? {
-					...prev,
-					status_id: newStatusId,
-					status: statusesData.find(s => s.id === newStatusId) || prev.status
-				} : null);
-			}
-
 		} catch (error) {
-			console.error('Error updating task status:', error);
+			console.error('Ошибка сети:', error);
 		}
+
+	};
+
+	const handleReleasesLoaded = (releases: ReleaseItem[]) => {
+		setReleasesData(releases);
 	};
 
 	return (
@@ -131,6 +209,10 @@ const MainPage = () => {
 					userRole={currentUserRole}
 					userId={currentUserId}
 					onStatusesLoaded={handleStatusesLoaded}
+					onReleasesLoaded={handleReleasesLoaded}
+					releasesData={releasesData}
+					projects={projects}
+					colleagues={colleagues}
 				/>
 
 				{selectedTask ? (
@@ -139,9 +221,16 @@ const MainPage = () => {
 						userRole={currentUserRole}
 						statuses={statusesData}
 						onStatusChange={handleStatusChange}
+						projects={projects}
+						colleagues={colleagues}
 					/>
 				) : selectedColleague ? (
-					<ColleagueInfo userRole={currentUserRole} selectedColleague={selectedColleague} />
+					<ColleagueInfo
+						userRole={currentUserRole}
+						selectedColleague={selectedColleague}
+						colleagues={colleagues}
+						projects={projects}
+					/>
 				) : showCalendarEvents ? (
 					<CalendarEvents />
 				) : (

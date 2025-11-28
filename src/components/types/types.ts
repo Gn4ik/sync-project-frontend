@@ -39,6 +39,15 @@ export type Schedule = {
   mon: WorkDay;
 }
 
+type TaskComment = {
+  author: Colleague;
+  author_id: number;
+  created_at: string;
+  id: number;
+  task_id: number;
+  text: string;
+}
+
 export type TaskItem = {
   id: number;
   created_at: string;
@@ -50,7 +59,7 @@ export type TaskItem = {
   start_date: string;
   name: string;
   status_id: number;
-  task_comments: any[];
+  task_comments: TaskComment[];
   task_files: any[];
   isExpanded?: boolean;
   isActive?: boolean;
@@ -147,7 +156,7 @@ export type ListNode = {
   icon?: string | React.ReactNode;
   badge?: string | number;
   data?: any;
-  color?: string;
+  status?: Status | TaskStatus;
   deadline?: string;
 }
 
@@ -180,7 +189,7 @@ export type TaskFormData = {
   description: string;
 }
 
-const statusMap: Record<string, TaskStatus> = {
+export const statusMap: Record<string, TaskStatus> = {
   'К выполнению': 'to-execution',
   'В работе': 'on-work',
   'Отложен': 'stopped',

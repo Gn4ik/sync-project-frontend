@@ -27,7 +27,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': '0',
-          "SyncAuthToken": token,
+          "Authorization": `Bearer ${token}`,
         }
       });
 

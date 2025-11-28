@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { getTaskStatusFromAlias, TaskItem } from '@types';
+import { Colleague, getTaskStatusFromAlias, ProjectItem, Status, TaskItem } from '@types';
 import TaskInfoUI from '@ui/TaskInfo';
+
+const URL = process.env.HOST;
 
 type TaskInfoProps = {
   selectedTask?: TaskItem | null;
   userRole: string | null;
-  statuses?: Array<{ id: number; alias: string }>;
+  statuses?: Status[];
   onStatusChange?: (taskId: number, newStatusId: number) => void;
+  projects: ProjectItem[];
+  colleagues: Colleague[];
 }
 
 const useAutoResizeTextarea = () => {
@@ -27,7 +31,7 @@ const useAutoResizeTextarea = () => {
   return { textareaRef, adjustHeight };
 };
 
-const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfoProps) => {
+const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, colleagues }: TaskInfoProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isManagerPopupOpen, setIsManagerPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -41,8 +45,6 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfo
   const taskStatus = getTaskStatusFromAlias(selectedTask?.status.alias || '');
   const lineClass = `line status-${taskStatus}`;
   const backgroundClass = `task-info-container status-${taskStatus}`;
-
-  const displayStatus = selectedTask?.status.alias || '';
 
   const months = [
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -91,9 +93,28 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfo
     setIsDeleteModalOpen(true);
   };
 
-  const handleEditSubmit = (formData: any) => {
-    console.log('Данные для редактирования:', formData);
-    setIsEditModalOpen(false);
+  const handleEditSubmit = async (formData: any) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+      const response = await fetch(`${URL}/tasks/update/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': '0',
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        setIsEditModalOpen(false);
+      }
+    }
+    catch (error) {
+      console.error('Ошибка сети:', error);
+    }
   };
 
   const handleDeleteSubmit = () => {
@@ -134,7 +155,6 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfo
       userRole={userRole}
       statuses={statuses}
       taskStatus={taskStatus}
-      displayStatus={displayStatus}
       lineClass={lineClass}
       backgroundClass={backgroundClass}
       isDropdownOpen={isDropdownOpen}
@@ -145,6 +165,8 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange }: TaskInfo
       managerButtonRef={managerButtonRef}
       dropdownRef={dropdownRef}
       textareaRef={textareaRef}
+      projects={projects}
+      colleagues={colleagues}
       parseDate={parseDate}
       onTextareaInput={handleTextareaInput}
       onStatusChange={handleStatusChange}

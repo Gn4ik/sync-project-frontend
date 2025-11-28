@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import './Modal.css';
+import { Colleague, ProjectItem } from '@components/types';
+
+const URL = process.env.HOST;
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,21 +11,9 @@ interface ModalProps {
   type: 'release' | 'project' | 'task' | 'meeting' | 'colleague' | 'office';
   mode?: 'create' | 'edit';
   initialData?: any;
+  colleagues: Colleague[];
+  projects: ProjectItem[];
 }
-
-const mockColleagues = [
-  { id: '1', name: 'Артем Evil', position: 'Backend-разработчик' },
-  { id: '2', name: 'Gn4ik', position: 'Frontend-разработчик' },
-  { id: '3', name: 'Ksu Vedernikova', position: 'Технический писатель' },
-  { id: '4', name: 'Полина Сидорина', position: 'Дизайнер' },
-  { id: '5', name: 'Иван Садиков', position: 'Глава отдела' }
-];
-
-const mockOffices = [
-  { id: '1', name: 'офис 1' },
-  { id: '2', name: 'офис 2' },
-  { id: '3', name: 'офис 3' }
-];
 
 const Modal = ({
   isOpen,
@@ -30,7 +21,9 @@ const Modal = ({
   onSubmit,
   type,
   mode = 'create',
-  initialData
+  initialData,
+  projects,
+  colleagues
 }: ModalProps) => {
 
   const [formData, setFormData] = useState({
@@ -42,11 +35,10 @@ const Modal = ({
     email: '',
     phone: '',
     birthDate: '',
-    isOnline: false,
 
     project: '',
     assignee: '',
-    deadline: '',
+    end_date: '',
     description: '',
     link: '',
     version: '',
@@ -67,25 +59,40 @@ const Modal = ({
   useEffect(() => {
     if (isOpen) {
       if (mode === 'edit' && initialData) {
+        const formatDateForInput = (dateString: string) => {
+          if (!dateString) return '';
+          try {
+            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              return dateString;
+            }
+            if (dateString.includes('T')) {
+              return dateString.split('T')[0];
+            }
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            return date.toISOString().split('T')[0];
+          } catch {
+            return '';
+          }
+        }
         setFormData({
-          title: initialData.title || '',
-          name: initialData.name || '',
+          title: initialData.name || '',
+          name: initialData.lname + initialData.fname + initialData.mname || '',
           position: initialData.position || '',
           department: initialData.department || '',
           office: initialData.office || '',
           email: initialData.email || '',
           phone: initialData.phone || '',
           birthDate: initialData.birthDate || '',
-          isOnline: initialData.isOnline || false,
           description: initialData.description || '',
-          deadline: initialData.deadline || '',
+          end_date: formatDateForInput(initialData.end_date) || '',
           link: initialData.link || '',
           version: initialData.version || '',
           participants: initialData.participants || [],
           meetingDate: initialData.meetingDate || '',
           meetingTime: initialData.meetingTime || '',
-          project: initialData.project || '',
-          assignee: initialData.assignee || '',
+          project: initialData.project_id?.toString() || '',
+          assignee: initialData.executor_id?.toString() || '',
           officeName: initialData.officeName || initialData.name || '',
           manager: initialData.manager || ''
         });
@@ -99,9 +106,8 @@ const Modal = ({
           email: '',
           phone: '',
           birthDate: '',
-          isOnline: false,
           description: '',
-          deadline: '',
+          end_date: '',
           link: '',
           version: '',
           participants: [],
@@ -127,8 +133,10 @@ const Modal = ({
     office: mode === 'edit' ? 'Редактировать офис' : 'Добавить офис'
   };
 
-  const filteredColleagues = mockColleagues.filter(colleague =>
-    colleague.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredColleagues = colleagues.filter(colleague =>
+    colleague.fname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    colleague.mname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    colleague.lname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     colleague.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -151,10 +159,25 @@ const Modal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      type: type
-    });
+    if (type === 'task') {
+      const taskData = {
+        id: mode === 'edit' && initialData ? initialData.id : 0,
+        name: formData.title,
+        description: formData.description,
+        end_date: formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : '',
+        project_id: parseInt(formData.project) || 0,
+        executor_id: parseInt(formData.assignee) || 0,
+        status_id: mode === 'edit' && initialData ? initialData.status_id : 1
+      };
+
+      console.log('Sending task data:', taskData);
+      onSubmit(taskData);
+    } else {
+      onSubmit({
+        ...formData,
+        type: type
+      });
+    }
     onClose();
   };
 
@@ -176,7 +199,7 @@ const Modal = ({
 
   const getSelectedParticipantsNames = () => {
     return formData.participants.map(id =>
-      mockColleagues.find(c => c.id === id)?.name
+      colleagues.find(c => c.id === id)?.fname + ' ' + colleagues.find(c => c.id === id)?.lname
     ).filter(Boolean).join(', ');
   };
 
@@ -294,11 +317,11 @@ const Modal = ({
                       required
                     >
                       <option value="" disabled hidden>Выберите офис</option>
-                      {mockOffices.map(office => (
+                      {/* {mockOffices.map(office => (
                         <option key={office.id} value={office.id} className='form-text'>
                           {office.name}
                         </option>
-                      ))}
+                      ))} */}
                     </select>
                   </div>
 
@@ -362,9 +385,13 @@ const Modal = ({
                         required
                       >
                         <option value="" disabled hidden>Выберите проект</option>
-                        <option value="project1" className='form-text'>Проект 1</option>
-                        <option value="project2" className='form-text'>Проект 2</option>
-                        <option value="project3" className='form-text'>Проект 3</option>
+                        {
+                          projects.map(project => (
+                            <option key={project.id} value={project.id} className='form-select-item'>
+                              {project.name}
+                            </option>
+                          ))
+                        }
                       </select>
                     </div>
                   )}
@@ -391,7 +418,7 @@ const Modal = ({
                                 onClick={() => handleParticipantToggle(colleague.id)}
                               >
                                 <div className="participant-info">
-                                  <div className="participant-name">{colleague.name}</div>
+                                  <div className="participant-name">{colleague.lname} {colleague.fname} {colleague.mname}</div>
                                   <div className="participant-position">{colleague.position}</div>
                                 </div>
                                 <div className="participant-checkbox">
@@ -446,9 +473,19 @@ const Modal = ({
                         <option value="" disabled hidden>
                           {type === 'task' ? 'Выберите проект' : 'Выберите релиз'}
                         </option>
-                        <option value="project1" className='form-text'>data1</option>
-                        <option value="project2" className='form-text'>data2</option>
-                        <option value="project3" className='form-text'>data3</option>
+                        {type === 'task'
+                          ? projects.map(project => (
+                            <option key={project.id} value={project.id} className='form-select-item'>
+                              {project.name}
+                            </option>
+                          ))
+                          :
+                          projects.map(project => (
+                            <option key={project.id} value={project.id} className='form-text'>
+                              {/* {project.name} */}
+                            </option>
+                          ))
+                        }
                       </select>
                     </div>
                   )}
@@ -491,9 +528,11 @@ const Modal = ({
                         required
                       >
                         <option value="" disabled hidden className='form-text'>Выберите исполнителя</option>
-                        <option value="assignee1" className='form-text'>Исполнитель 1</option>
-                        <option value="assignee2" className='form-text'>Исполнитель 2</option>
-                        <option value="assignee3" className='form-text'>Исполнитель 3</option>
+                        {colleagues.map(colleague => (
+                          <option key={colleague.id} value={colleague.id} className='form-select-item'>
+                            {colleague.fname} {colleague.lname} - {colleague.position}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   )}
@@ -504,8 +543,8 @@ const Modal = ({
                       <input
                         type="date"
                         className="form-input form-text"
-                        value={formData.deadline}
-                        onChange={(e) => handleChange('deadline', e.target.value)}
+                        value={formData.end_date}
+                        onChange={(e) => handleChange('end_date', e.target.value)}
                         required={type === 'task'}
                       />
                     </div>

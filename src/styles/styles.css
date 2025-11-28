@@ -9,6 +9,10 @@ body * {
   color: #2D2D2D;
 }
 
+*::-webkit-scrollbar {
+  display: none;
+}
+
 .container-row {
   display: flex;
   flex-direction: row;

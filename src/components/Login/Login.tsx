@@ -22,11 +22,12 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
   const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
     const response = await fetch(`${URL}/auth/login/`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'ngrok-skip-browser-warning': '0'
       },
-      body: JSON.stringify({ email, password }),
+      body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
     });
 
     const data = await response.json();
@@ -41,7 +42,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     try {
       const response = await loginUser(email, password);
 
