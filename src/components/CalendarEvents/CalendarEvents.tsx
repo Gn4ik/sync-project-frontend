@@ -1,6 +1,6 @@
 import './CalendarEvents.css';
 import { useState, useEffect } from 'react';
-import { TaskItem } from '@types';
+import { CalendarItem, Meeting, TaskItem } from '@types';
 
 interface CalendarEvent {
   id: string;
@@ -13,91 +13,124 @@ interface CalendarEvent {
 }
 
 interface CalendarEventsProps {
-  tasks?: any[];
+  currentUser: number;
+  employeeCalendar: CalendarItem[];
+  meetings: Meeting[];
 }
 
 interface GroupedEvents {
   [date: string]: CalendarEvent[];
 }
+
 const monthsGenitive = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
 ];
 
-const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
+const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEventsProps) => {
   const [groupedEvents, setGroupedEvents] = useState<GroupedEvents>({});
 
-  const extractTasksFromData = (data: any[]): TaskItem[] => {
-    const tasks: TaskItem[] = [];
+  useEffect(() => {
+    const createEventsFromCalendarData = (): CalendarEvent[] => {
+      const events: CalendarEvent[] = [];
+      const today = new Date();
+      const twoWeeksLater = new Date(today);
+      twoWeeksLater.setDate(today.getDate() + 14);
 
-    const extractTasks = (items: any[]) => {
-      items.forEach(item => {
-        if (item.children) {
-          extractTasks(item.children);
+      const usedTaskTitles = new Set<string>();
+
+      employeeCalendar.forEach(calendarDay => {
+        if (calendarDay) {
+          const dayDate = new Date(calendarDay.day);
+
+          if (dayDate >= today && dayDate <= twoWeeksLater) {
+            usedTaskTitles.clear();
+
+            calendarDay.task_deadlines?.forEach(([taskName, taskUrl], index) => {
+              const uniqueKey = `${calendarDay.day}-${taskName}`;
+              if (!usedTaskTitles.has(uniqueKey)) {
+                usedTaskTitles.add(uniqueKey);
+                events.push({
+                  id: `deadline-${calendarDay.day}-${index}`,
+                  title: `Дедлайн задачи "${taskName}"`,
+                  date: calendarDay.day,
+                  type: 'deadline'
+                });
+              }
+            });
+
+            calendarDay.timesheet?.forEach(([time, description, url], index) => {
+              const taskNameMatch = description.match(/Дедлайн задачи "([^"]+)"/);
+              const taskName = taskNameMatch ? taskNameMatch[1] : description;
+              const uniqueKey = `${calendarDay.day}-${taskName}`;
+
+              if (!usedTaskTitles.has(uniqueKey)) {
+                usedTaskTitles.add(uniqueKey);
+                events.push({
+                  id: `timesheet-${calendarDay.day}-${index}`,
+                  title: description,
+                  date: calendarDay.day,
+                  time: time !== '00:00:00' ? time.substring(0, 5) : undefined,
+                  type: 'deadline'
+                });
+              }
+            });
+
+            calendarDay.active_tasks?.forEach(([taskName, taskUrl], index) => {
+              const uniqueKey = `${calendarDay.day}-${taskName}`;
+              if (!usedTaskTitles.has(uniqueKey)) {
+                usedTaskTitles.add(uniqueKey);
+                events.push({
+                  id: `active-${calendarDay.day}-${index}`,
+                  title: `Активная задача: "${taskName}"`,
+                  date: calendarDay.day,
+                  type: 'deadline'
+                });
+              }
+            });
+          }
         }
-        if (item.executor && item.deadline) {
-          tasks.push(item);
+      });
+
+      meetings.forEach(meeting => {
+        const meetingDate = new Date(meeting.date);
+
+        if (meetingDate >= today && meetingDate <= twoWeeksLater) {
+          const isParticipant = meeting.employee_meetings.some(
+            emp => emp.employee_id === currentUser
+          );
+
+          if (isParticipant) {
+            const meetingDay = meeting.date.split('T')[0];
+            const meetingTime = meeting.date.split('T')[1]?.substring(0, 5);
+
+            events.push({
+              id: `meeting-${meeting.id}`,
+              title: `Встреча: ${meeting.name}`,
+              date: meetingDay,
+              time: meetingTime,
+              type: 'meeting'
+            });
+          }
         }
+      });
+
+      return events.sort((a, b) => {
+        const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateCompare !== 0) return dateCompare;
+
+        if (!a.time && !b.time) return 0;
+        if (!a.time) return -1;
+        if (!b.time) return 1;
+
+        return a.time.localeCompare(b.time);
       });
     };
 
-    extractTasks(data);
-    return tasks;
-  };
-
-  const createEventsFromTasks = (taskList: TaskItem[]): CalendarEvent[] => {
-    const events: CalendarEvent[] = [];
-
-    taskList.forEach(task => {
-      if (task.end_date) {
-        const deadlineDate = new Date(task.end_date);
-        const today = new Date();
-        const fiveDaysLater = new Date();
-        fiveDaysLater.setDate(today.getDate() + 5);
-
-        if (deadlineDate >= today && deadlineDate <= fiveDaysLater) {
-          events.push({
-            id: `deadline-${task.id}`,
-            title: `Дедлайн задачи "${task.name}"`,
-            date: task.end_date,
-            type: 'deadline',
-            task: task
-          });
-        }
-      }
-    });
-
-    const mockMeetings: CalendarEvent[] = [
-      {
-        id: 'meeting-1',
-        title: 'Встреча по проекту 100',
-        date: '2025-11-25',
-        time: '14:00',
-        type: 'meeting',
-        project: 'Проект 100'
-      },
-      {
-        id: 'meeting-2',
-        title: 'Совещание команды',
-        date: '2025-11-25',
-        time: '10:00',
-        type: 'meeting'
-      }
-    ];
-
-    const today = new Date();
-    const fiveDaysLater = new Date();
-    fiveDaysLater.setDate(today.getDate() + 5);
-
-    const filteredMeetings = mockMeetings.filter(meeting => {
-      const meetingDate = new Date(meeting.date);
-      return meetingDate >= today && meetingDate <= fiveDaysLater;
-    });
-
-    return [...events, ...filteredMeetings].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-  };
+    const events = createEventsFromCalendarData();
+    const grouped = groupEventsByDate(events);
+    setGroupedEvents(grouped);
+  }, [employeeCalendar, meetings, currentUser]);
 
   const groupEventsByDate = (events: CalendarEvent[]): GroupedEvents => {
     const grouped: GroupedEvents = {};
@@ -112,95 +145,6 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
     return grouped;
   };
 
-  useEffect(() => {
-    const mockTasksData = [
-      {
-        id: '1',
-        title: 'Релиз 1',
-        isExpanded: false,
-        children: [
-          {
-            id: '2',
-            title: 'Проект 100',
-            isExpanded: false,
-            description: `Описание проекта`,
-            children: [
-              {
-                id: '3',
-                title: 'Разработка формы авторизации для личного кабинета',
-                isExpanded: false,
-                executor: 1,
-                status: 'stopped',
-                createdDate: '2025-11-15',
-                deadline: '2025-11-25',
-                description: `Необходимо разработать адаптивную форму авторизации...`
-              },
-              {
-                id: '3221',
-                title: 'Разработка формы авторизации для личного кабинета',
-                isExpanded: false,
-                executor: 1,
-                status: 'on-work',
-                createdDate: '2025-11-13',
-                deadline: '2025-11-24',
-                description: `Необходимо разработать адаптивную форму авторизации...`
-              },
-              {
-                id: '412421',
-                title: 'Разработка формы авторизации для личного кабинета',
-                isExpanded: false,
-                executor: 2,
-                status: 'closed',
-                createdDate: '2025-11-11',
-                deadline: '2025-11-24',
-                description: `Необходимо разработать адаптивную форму авторизации...`
-              },
-              {
-                id: '65655',
-                title: 'Разработка формы авторизации для личного кабинета',
-                isExpanded: false,
-                executor: 3,
-                status: 'completed',
-                createdDate: '2025-12-15',
-                deadline: '2025-11-23',
-                description: `Необходимо разработать адаптивную форму авторизации...`
-              },
-            ]
-          },
-          {
-            id: '4',
-            title: 'Проект 2',
-            isExpanded: false,
-          }
-        ]
-      },
-      {
-        id: '5',
-        title: 'Релиз 2',
-        isExpanded: false,
-        children: [
-          {
-            id: '6',
-            title: 'Разработка формы авторизации для личного кабинета',
-            isExpanded: false,
-            executor: 1,
-            status: 'on-work',
-            createdDate: '2025-11-14',
-            deadline: '2025-11-22',
-            description: `Описание задачи`
-          },
-        ]
-      }
-    ];
-
-    const tasksToUse = tasks || mockTasksData;
-    const extractedTasks = extractTasksFromData(tasksToUse);
-    const calendarEvents = createEventsFromTasks(extractedTasks);
-    const grouped = groupEventsByDate(calendarEvents);
-
-    setGroupedEvents(grouped);
-  }, [tasks]);
-
   const formatDateHeader = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -209,6 +153,7 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
 
     if (date.toDateString() === today.toDateString()) return 'Сегодня';
     if (date.toDateString() === tomorrow.toDateString()) return 'Завтра';
+
     const weekday = date.toLocaleString('ru-RU', { weekday: 'long' });
     return `${date.getDate()} ${monthsGenitive[date.getMonth()]}, ${weekday}`;
   };
@@ -225,7 +170,6 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
         <div className="events-list">
           {sortedDates.map(date => (
             <div key={date} className="date-group">
-
               <div className="date-header">
                 {formatDateHeader(date)}
               </div>
@@ -235,14 +179,13 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
               <div className="events-for-date">
                 {groupedEvents[date].map(event => (
                   <div key={event.id} className="event-row">
-
                     <div
                       className={`event-time ${!event.time ? 'no-time' : ''}`}
                     >
                       {event.time || ''}
                     </div>
                     <div
-                      className={`event-title-inline ${event.type === 'deadline' ? 'deadline' : ''}`}
+                      className={`event-title-inline ${event.type === 'deadline' ? 'deadline' : 'meeting'}`}
                     >
                       {event.title}
                     </div>
@@ -251,6 +194,12 @@ const CalendarEvents = ({ tasks }: CalendarEventsProps) => {
               </div>
             </div>
           ))}
+
+          {sortedDates.length === 0 && (
+            <div className="no-results">
+              На ближайшие две недели событий нет
+            </div>
+          )}
         </div>
       </div>
     </div>

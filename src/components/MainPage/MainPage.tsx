@@ -3,11 +3,11 @@ import '@styles/styles.css'
 import TaskInfo from "../TaskInfo/TaskInfo";
 import SideBar from "../SideBar/SideBar";
 import { useEffect, useState } from "react";
-import { Department, Employee, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
+import { CalendarItem, Department, Employee, Meeting, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
 import EmployeeInfo from "../EmployeeInfo/EmployeeInfo";
 import Calendar from "../Calendar/Calendar";
 import CalendarEvents from "../CalendarEvents/CalendarEvents";
-import { authAPI, departmentsAPI, employeesAPI, projectsAPI, releasesAPI, statusAPI, tasksAPI } from "@utils/api";
+import { authAPI, departmentsAPI, employeesAPI, meetingsAPI, projectsAPI, releasesAPI, statusAPI, tasksAPI } from "@utils/api";
 
 const MainPage = () => {
 	const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
@@ -17,9 +17,12 @@ const MainPage = () => {
 
 	const [currentUserRole, setCurrentUserRole] = useState<'executor' | 'manager' | 'admin' | null>(null);
 	const [currentUserId, setCurrentUserId] = useState<number>(0);
+	const [taskInfoLoading, setTaskInfoLoading] = useState(false);
 
 	const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
 	const [projects, setProjectsData] = useState<ProjectItem[]>([]);
+	const [calendarData, setCalendarData] = useState<CalendarItem[]>([]);
+	const [meetengsData, setMeetingsData] =  useState<Meeting[]>([]);
 	const [employees, setEmployeesData] = useState<Employee[]>([]);
 	const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -63,17 +66,29 @@ const MainPage = () => {
 		}
 	};
 
+	function getDateInTwoWeeks() {
+		const today = new Date();
+		const inTwoWeeks = new Date(today);
+		inTwoWeeks.setDate(today.getDate() + 14);
+		return inTwoWeeks.toISOString().split('T')[0];
+	}
+
+	const today = new Date().toISOString().split('T')[0];
+	const twoWeeksLater = getDateInTwoWeeks();
+
 	useEffect(() => {
 		checkRole();
 		const loadAllData = async () => {
 			try {
 				setLoading(true);
-				const [releases, employees, projects, departments, statuses] = await Promise.all([
+				const [releases, employees, projects, departments, statuses, calendar, meetengs] = await Promise.all([
 					releasesAPI.getReleases(),
 					employeesAPI.getEmployees(),
 					projectsAPI.getProjects(),
 					departmentsAPI.getDepartments(),
-					statusAPI.getStatuses()
+					statusAPI.getStatuses(),
+					employeesAPI.getEmployeeCalendar(today, twoWeeksLater),
+					meetingsAPI.getMeetings()
 				]);
 
 				setReleasesData(releases);
@@ -81,6 +96,8 @@ const MainPage = () => {
 				setProjectsData(projects);
 				setDepartmentsData(departments);
 				setStatusesData(statuses);
+				setCalendarData(calendar);
+				setMeetingsData(meetengs);
 			} catch (error) {
 				console.error('Error loading data:', error);
 			} finally {
@@ -148,13 +165,27 @@ const MainPage = () => {
 
 	};
 
-	const handleReleasesLoaded = (releases: ReleaseItem[]) => {
-		setReleasesData(releases);
+	const refreshTasks = async () => {
+		try {
+			const newReleases = await releasesAPI.getReleases();
+			setReleasesData(newReleases);
+		} catch (error) {
+			console.error('Error refreshing tasks:', error);
+		}
 	};
 
-	const refreshTasks = async () => {
-		const newReleases = await releasesAPI.getReleases();
-		setReleasesData(newReleases);
+	const refreshSelectedTask = async (taskId: number) => {
+		try {
+			setTaskInfoLoading(true);
+			const updatedTaskResponse = await tasksAPI.getTasksById(taskId);
+			if (updatedTaskResponse) {
+				setSelectedTask(updatedTaskResponse);
+			}
+		} catch (error) {
+			console.error('Error refreshing selected task:', error);
+		} finally {
+			setTaskInfoLoading(false);
+		}
 	};
 
 	return (
@@ -170,8 +201,7 @@ const MainPage = () => {
 					onEmployeeSelect={handleEmployeeSelect}
 					userRole={currentUserRole}
 					userId={currentUserId}
-					onStatusesLoaded={handleStatusesLoaded}
-					onReleasesLoaded={handleReleasesLoaded}
+					onTasksUpdate={refreshTasks}
 					releasesData={releasesData}
 					departmentsData={departmentsData}
 					projectsData={projects}
@@ -183,10 +213,16 @@ const MainPage = () => {
 					<TaskInfo
 						selectedTask={selectedTask}
 						userRole={currentUserRole}
+						userId={currentUserId}
 						statuses={statusesData}
 						onStatusChange={handleStatusChange}
 						projects={projects}
 						employees={employees}
+						onTaskUpdate={() => {
+							refreshTasks();
+							refreshSelectedTask(selectedTask.id);
+						}}
+						loading={taskInfoLoading}
 					/>
 				) : selectedEmployee ? (
 					<EmployeeInfo
@@ -195,7 +231,11 @@ const MainPage = () => {
 						departments={departmentsData}
 					/>
 				) : showCalendarEvents ? (
-					<CalendarEvents />
+					<CalendarEvents
+						currentUser={currentUserId}
+						employeeCalendar={calendarData}
+						meetings={meetengsData}
+					/>
 				) : (
 					<div style={{ flex: 1, padding: 0, margin: 0 }}>
 						<div className="line-container">

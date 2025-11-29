@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Employee, getTaskStatusFromAlias, ProjectItem, Status, TaskItem } from '@types';
 import TaskInfoUI from '@ui/TaskInfo';
 import { tasksAPI } from '@utils/api';
+import Preloader from '@components/Preloader';
 
 type TaskInfoProps = {
   selectedTask?: TaskItem | null;
   userRole: string | null;
+  userId: number;
   statuses?: Status[];
   onStatusChange?: (taskId: number, newStatusId: number) => void;
   projects: ProjectItem[];
   employees: Employee[];
+  onTaskUpdate?: () => void;
+  loading?: boolean;  
 }
 
 const useAutoResizeTextarea = () => {
@@ -30,7 +34,17 @@ const useAutoResizeTextarea = () => {
   return { textareaRef, adjustHeight };
 };
 
-const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, employees }: TaskInfoProps) => {
+const TaskInfo = ({
+  selectedTask,
+  userRole,
+  statuses,
+  userId,
+  onStatusChange,
+  projects,
+  employees,
+  loading = false,
+  onTaskUpdate
+}: TaskInfoProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isManagerPopupOpen, setIsManagerPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -128,7 +142,16 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
       }
       const response = await tasksAPI.updateTask(formData);
       if (response.ok) {
+        onTaskUpdate?.();
         setIsEditModalOpen(false);
+        
+        if (selectedTask) {
+          const updatedTaskResponse = await tasksAPI.getTasksById(selectedTask.id);
+          if (updatedTaskResponse.ok) {
+            const updatedTask = await updatedTaskResponse.json();
+            selectedTask = updatedTask;
+          }
+        }
       }
     }
     catch (error) {
@@ -144,7 +167,8 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
       }
       const response = await tasksAPI.deleteTask(taskId);
       if (response.ok) {
-        setIsDeleteModalOpen(false);
+        setIsDeleteModalOpen(false);  
+        onTaskUpdate?.();
       }
     }
     catch (error) {
@@ -179,11 +203,15 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
     };
   }, []);
 
+  if(loading) 
+    return <Preloader />
+
   return (
     <TaskInfoUI
       selectedTask={selectedTask}
       userRole={userRole}
       statuses={statuses}
+      userId={userId}
       taskStatus={taskStatus}
       lineClass={lineClass}
       backgroundClass={backgroundClass}

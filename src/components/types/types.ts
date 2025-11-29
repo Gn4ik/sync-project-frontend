@@ -85,6 +85,7 @@ export type Meeting = {
   id: number;
   creator_id: number;
   link: string;
+  employee_meetings: EmployeeMeeteng[];
 }
 
 export type WorkDay = {
@@ -102,7 +103,7 @@ export type Department = {
   staff: StaffItem[];
 }
 
-export type StaffItem = { 
+export type StaffItem = {
   department_id: number;
   employee_id: number;
   office: string;
@@ -202,6 +203,15 @@ export type TaskFormData = {
   assignee: string;
   deadline: string;
   description: string;
+}
+
+export type CalendarItem = {
+  day: string;
+  is_vacation: boolean;
+  is_weekend: boolean;
+  task_deadlines?: Array<[string, string]>;
+  timesheet?: Array<[string, string, string]>;
+  active_tasks?: Array<[string, string]>;
 }
 
 export const statusMap: Record<string, TaskStatus> = {

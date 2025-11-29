@@ -81,8 +81,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
   padding: 4px 8px;
+}
+
+.can-edit {
+  cursor: pointer;
 }
 
 .status-badge {

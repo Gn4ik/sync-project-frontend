@@ -24,6 +24,7 @@ interface TaskInfoUIProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   projects: ProjectItem[];
   employees: Employee[];
+  userId: number;
   parseDate: (dateString: string) => string;
   onTextareaInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onStatusChange: (newStatusId: number) => void;
@@ -42,6 +43,7 @@ interface TaskInfoUIProps {
 const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   selectedTask,
   userRole,
+  userId,
   statuses,
   taskStatus,
   lineClass,
@@ -82,6 +84,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   }
 
   const [displayStatus, setDisplayStatus] = useState<string>('');
+  const allowedUser = userId === selectedTask.executor_id || userRole === 'manager';
 
   useEffect(() => {
     if (selectedTask && selectedTask.status) {
@@ -161,11 +164,11 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                 <div className='meta-info'>
                   <div className='status-section' ref={dropdownRef}>
                     <span className='section-label'>Статус:</span>
-                    <div className='status-dropdown' onClick={onToggleDropdown}>
+                    <div className={`status-dropdown ${allowedUser && `can-edit`}`} onClick={allowedUser ? onToggleDropdown : () => { }}>
                       <span className='status-badge'>{displayStatus}</span>
-                      <span className={`dropdown-arrow ${isDropdownOpen ? 'dropdown-arrow-open' : ''}`}>❯</span>
+                      {(allowedUser && <span className={`dropdown-arrow ${isDropdownOpen ? 'dropdown-arrow-open' : ''}`}>❯</span>)}
                     </div>
-                    {isDropdownOpen && statuses && (
+                    {isDropdownOpen && statuses && allowedUser && (
                       <div className='dropdown-menu'>
                         {statuses.map((statusItem) => (
                           <div
@@ -208,7 +211,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                   </p>
                 ))}
               </div>
-              
+
               {selectedTask.task_files && selectedTask.task_files.length > 0 && (
                 <div className="files-section">
                   <h3 className="section-title">Файлы:</h3>

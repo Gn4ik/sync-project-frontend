@@ -7,15 +7,13 @@ import EmployeesList from '../EmployeesList/EmployeesList';
 import InfoModal from '../InfoModal/InfoModal';
 import OfficesList from '../OfficesList/OfficesList';
 import Preloader from '@components/Preloader';
-import { statusAPI } from '@utils/api';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
   onEmployeeSelect: (employee: Employee) => void;
   userRole: 'executor' | 'manager' | 'admin' | null;
   userId: number;
-  onStatusesLoaded?: (statuses: Array<{ id: number; alias: string }>) => void;
-  onReleasesLoaded?: (releases: ReleaseItem[]) => void;
+  onTasksUpdate?: () => void;
   releasesData: ReleaseItem[];
   projectsData: ProjectItem[];
   employeesData: Employee[];
@@ -28,8 +26,7 @@ const SideBar = ({
   onEmployeeSelect,
   userRole,
   userId,
-  onStatusesLoaded,
-  onReleasesLoaded,
+  onTasksUpdate,
   releasesData,
   projectsData,
   employeesData,
@@ -38,43 +35,12 @@ const SideBar = ({
 }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'employees'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
-  const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
   const [activeEmployeeId, setActiveEmployeeId] = useState<string | null>(null);
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
     isOpen: false,
     type: null,
     data: null
   });
-
-  const getAuthToken = () => localStorage.getItem('auth_token');
-
-  const loadStatuses = async () => {
-    try {
-      const statuses = await statusAPI.getStatuses();
-      console.log('Statuses loaded:', statuses);
-      setStatusesData(statuses);
-      onStatusesLoaded?.(statuses);
-      return statuses;
-    } catch (error) {
-      console.error('Statuses loading failed:', error);
-      return null;
-    }
-  };
-  useEffect(() => {
-    loadStatuses()
-  }, []);
-
-  useEffect(() => {
-    // const loadDataForActiveList = async () => {
-    //   if (userRole === 'admin') {
-    //     await loadDepartments();
-    //   } else if (activeList === 'employees' && !hasLoaded.current.employees) {
-    //     await loadEmployees();
-    //   }
-    // };
-
-    // loadDataForActiveList();
-  }, [activeList, userRole]);
 
   const handleListChange = (list: 'tasks' | 'employees') => {
     setActiveList(list);
@@ -198,6 +164,7 @@ const SideBar = ({
         userRole={userRole}
         projects={projectsData}
         employees={employeesData}
+        onTaskCreated={onTasksUpdate}
       />
 
       {userRole === 'admin' ? (

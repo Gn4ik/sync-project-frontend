@@ -20,6 +20,7 @@ interface NavButtonsProps {
   activeList: 'tasks' | 'employees';
   onListChange: (list: 'tasks' | 'employees') => void;
   onFilterChange: (filter: string) => void;
+  onTaskCreated?: () => void;
   currentFilter: string;
   userRole: 'executor' | 'manager' | 'admin' | null;
   projects: ProjectItem[];
@@ -36,7 +37,16 @@ const managerStatusFilters = [
   { key: 'closed', label: 'Отменены' },
 ];
 
-const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter, projects, employees }: NavButtonsProps) => {
+const NavButtons = ({
+  userRole,
+  activeList,
+  onListChange,
+  onFilterChange,
+  onTaskCreated,
+  currentFilter,
+  projects,
+  employees
+}: NavButtonsProps) => {
   const [popupAddOpen, setIsPopupAddOpen] = useState(false);
   const [popupFiltersOpen, setIsPopupFiltersOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -91,6 +101,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
     } catch (error) {
       console.error('Ошибка сети:', error);
     }
+    onTaskCreated?.()
     setActiveModal(null);
   };
 

@@ -65,7 +65,7 @@
 .form-section {
   flex: 1;
   padding: 5px 24px;
-  overflow-y: auto;
+  overflow-y: visible;
   display: grid;
   grid-template-columns: 1fr 2fr;
   justify-content: space-between;

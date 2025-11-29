@@ -57,6 +57,14 @@ export const tasksAPI = {
     return response.json();
   },
 
+  getTasksById: async (taskId: number) => {
+    const response = await fetch(`${URL}/tasks/get_by_id/?id=${taskId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
   createTask: async (taskData: any) => {
     const token = localStorage.getItem('auth_token');
     const response = await fetch(`${URL}/tasks/add/`, {
@@ -125,6 +133,14 @@ export const employeesAPI = {
     });
     return response.json();
   },
+
+  getEmployeeCalendar: async (start: string, end: string) => {
+    const response = await fetch(`${URL}/employees/calendar/mine/range?start_date=${start}&end_date=${end}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  }
 };
 
 export const statusAPI = {
@@ -137,14 +153,16 @@ export const statusAPI = {
   },
 }
 
-// export const meetingsAPI = {
-//   getMeetings: async () => {
-//     const response = await fetch(`${URL}/meetings/`, {
-//       method: 'GET',
-//       headers: getAuthHeaders(),
-//     });
-//     return response.json();
-//   },
+export const meetingsAPI = {
+  getMeetings: async () => {
+    const response = await fetch(`${URL}/meetings/all/`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+}
 
 //   createMeeting: async (meetingData: any) => {
 //     const response = await fetch(`${URL}/meetings/`, {
