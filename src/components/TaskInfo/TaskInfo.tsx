@@ -49,7 +49,6 @@ const TaskInfo = ({
   const [isManagerPopupOpen, setIsManagerPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [hasText, setHasText] = useState(false);
 
   const managerButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -78,7 +77,6 @@ const TaskInfo = ({
 
   const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     adjustHeight();
-    setHasText(e.target.value.trim().length > 0);
   };
 
   const handleStatusChange = (newStatusId: number) => {
@@ -176,6 +174,22 @@ const TaskInfo = ({
     }
   };
 
+  const handleCommentSubmit = async (taskId: number, text: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+      const response = await tasksAPI.commentTask(taskId, text);
+      if (response.ok) {
+        onTaskUpdate?.();
+      }
+    }
+    catch (error) {
+      console.error('Ошибка сети:', error);
+    }
+  };
+
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
@@ -219,7 +233,6 @@ const TaskInfo = ({
       isManagerPopupOpen={isManagerPopupOpen}
       isEditModalOpen={isEditModalOpen}
       isDeleteModalOpen={isDeleteModalOpen}
-      hasText={hasText}
       managerButtonRef={managerButtonRef}
       dropdownRef={dropdownRef}
       textareaRef={textareaRef}
@@ -238,6 +251,7 @@ const TaskInfo = ({
       onCloseEditModal={handleCloseEditModal}
       onCloseDeleteModal={handleCloseDeleteModal}
       onFileDownload={handleFileDownload}
+      onCommentSubmit={handleCommentSubmit}
     />
   );
 };

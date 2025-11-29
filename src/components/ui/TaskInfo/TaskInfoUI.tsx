@@ -18,7 +18,6 @@ interface TaskInfoUIProps {
   isManagerPopupOpen: boolean;
   isEditModalOpen: boolean;
   isDeleteModalOpen: boolean;
-  hasText: boolean;
   managerButtonRef: React.RefObject<HTMLButtonElement>;
   dropdownRef: React.RefObject<HTMLDivElement>;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -38,6 +37,7 @@ interface TaskInfoUIProps {
   onCloseEditModal: () => void;
   onCloseDeleteModal: () => void;
   onFileDownload: (fileId: number, fileName: string) => void;
+  onCommentSubmit: (taskId: number, text: string) => void;
 }
 
 const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
@@ -52,7 +52,6 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   isManagerPopupOpen,
   isEditModalOpen,
   isDeleteModalOpen,
-  hasText,
   managerButtonRef,
   dropdownRef,
   textareaRef,
@@ -70,7 +69,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   onDeleteSubmit,
   onCloseEditModal,
   onCloseDeleteModal,
-  onFileDownload
+  onFileDownload,
+  onCommentSubmit
 }) => {
 
   if (!selectedTask) {
@@ -85,12 +85,29 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
 
   const [displayStatus, setDisplayStatus] = useState<string>('');
   const allowedUser = userId === selectedTask.executor_id || userRole === 'manager';
+  const [commentText, setCommentText] = useState<string>('');
 
   useEffect(() => {
     if (selectedTask && selectedTask.status) {
       setDisplayStatus(selectedTask.status.alias);
     }
   }, [selectedTask]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (commentText.trim() && selectedTask) {
+      onCommentSubmit(selectedTask.id, commentText);
+      setCommentText('');
+      if (textareaRef.current) {
+        textareaRef.current.value = '';
+      }
+    }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCommentText(e.target.value);
+    onTextareaInput(e);
+  };
 
   return (
     <>
@@ -245,7 +262,9 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                 {selectedTask.task_comments.map(comment => (
                   <div className="comment-container">
                     <div className="comment-header">
-                      <div className="author-name">{comment.author.fname} {comment.author.lname}</div>
+                      <div className="author-name">{userId == comment.author_id
+                        ? 'Вы'
+                        : <>{comment.author.fname} {comment.author.lname}</>}</div>
                       <div className="comment-date">{parseDate(comment.created_at)}</div>
                     </div>
                     <div className="comment-text">
@@ -254,19 +273,20 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                   </div>
                 ))}
               </div>
-              <form className="comment-form">
-                <div className={`input-wrapper ${hasText ? 'has-text' : ''}`}>
+              <form className="comment-form" onSubmit={handleSubmit}>
+                <div className={`input-wrapper ${commentText ? 'has-text' : ''}`}>
                   <textarea
                     ref={textareaRef}
                     className="comment-input"
                     placeholder="Добавить комментарий"
                     maxLength={500}
-                    onInput={onTextareaInput}
+                    value={commentText}
+                    onInput={handleTextareaChange}
                   />
                   <button
                     type="submit"
                     className="submit-btn"
-                    disabled={!hasText}
+                    disabled={!commentText}
                   >
                     <svg width="26" height="24" viewBox="0 0 26 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path fillRule="evenodd" clipRule="evenodd" d="M24.3043 13.6435C25.0311 13.3048 25.4902 12.6122 25.4902 11.8545C25.4902 11.0969 25.0311 10.4043 24.3043 10.0655C19.4063 7.78274 8.69939 2.79302 3.16058 0.211583C2.35669 -0.16346 1.38731 -0.0311357 0.732679 0.542768C0.0772376 1.11667 -0.124748 2.00967 0.226497 2.78092C1.59741 5.79411 3.49884 9.97174 4.1551 11.4129C4.22973 11.577 4.23054 11.7623 4.15753 11.9271L0.161603 20.9735C-0.179098 21.7447 0.0293793 22.6317 0.684821 23.1995C1.34026 23.7674 2.30477 23.8967 3.1046 23.5239L24.3043 13.6435ZM23.6651 12.4511L2.46539 22.3315C2.1985 22.4555 1.87646 22.4124 1.65825 22.2234C1.44004 22.0343 1.37028 21.7379 1.48385 21.4808L5.48058 12.4345C5.69879 11.94 5.69555 11.3842 5.47166 10.892C4.81541 9.45077 2.91397 5.27314 1.54306 2.2607C1.42625 2.00362 1.49358 1.7057 1.71179 1.5144C1.93 1.3231 2.25285 1.27924 2.52136 1.404L23.6651 11.2579C23.9068 11.3713 24.0601 11.602 24.0601 11.8545C24.0601 12.1071 23.9068 12.3377 23.6651 12.4511Z" fill="#2D2D2D" fillOpacity="0.5" />

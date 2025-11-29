@@ -103,6 +103,15 @@ export const tasksAPI = {
       headers: getAuthHeaders(),
     });
     return response;
+  },
+
+  commentTask: async (taskId: number, text: string) => {
+    const response = await fetch(`${URL}/tasks/comments/add/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({task_id: taskId, text: text})
+    });
+    return response;
   }
 };
 
