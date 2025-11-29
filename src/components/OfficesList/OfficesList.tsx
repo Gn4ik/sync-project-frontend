@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Office, Colleague } from '@types';
-import ColleaguesList from '../ColleaguesList/ColleaguesList';
+import { Department, Employee } from '@types';
+import EmployeesList from '../EmployeesList/EmployeesList';
 import './OfficesList.css';
 import searchIcon from '@icons/SearchIcon.svg';
 
 interface OfficesListProps {
-  items: Office[];
-  onColleagueSelect?: (colleague: Colleague) => void;
+  items: Department[];
+  employees: Employee[];
+  onEmployeeSelect?: (employee: Employee) => void;
 }
 
-const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) => {
+const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeSelect }) => {
   const [expandedOffices, setExpandedOffices] = useState<Set<string>>(new Set());
   const [hoveredOffice, setHoveredOffice] = useState<string | null>(null);
-  const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
+  const [activeEmployeeId, setActiveEmployeeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredOffices, setFilteredOffices] = useState<Office[]>(items);
-
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>(items);
   const toggleOffice = (officeId: string) => {
     setExpandedOffices(prev => {
       const newSet = new Set(prev);
@@ -28,9 +28,9 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
     });
   };
 
-  const handleColleagueClick = (colleague: Colleague) => {
-    setActiveColleagueId(colleague.id);
-    onColleagueSelect?.(colleague);
+  const handleEmployeeClick = (employee: Employee) => {
+    setActiveEmployeeId(employee.id);
+    onEmployeeSelect?.(employee);
   };
 
   const handleInfoMouseEnter = (officeId: string) => {
@@ -41,37 +41,69 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
     setHoveredOffice(null);
   };
 
-  const searchOffices = (query: string, offices: Office[]): Office[] => {
-    if (!query.trim()) return offices;
+  const searchDepartments = (query: string, departments: Department[]): Department[] => {
+    if (!query.trim()) return departments;
 
     const lowercaseQuery = query.toLowerCase();
 
-    return offices.filter(office => {
-      const officeNameMatch = office?.name?.toLowerCase().includes(lowercaseQuery) || false;
-      const managerMatch = office?.manager?.toLowerCase().includes(lowercaseQuery) || false;
+    return departments.filter(department => {
+      const officeNameMatch = department?.name?.toLowerCase().includes(lowercaseQuery) || false;
+      const managerMatch = department.lead?.fname?.toLowerCase().includes(lowercaseQuery)
+        || department.lead?.lname?.toLowerCase().includes(lowercaseQuery)
+        || department.lead?.mname?.toLowerCase().includes(lowercaseQuery) || false;
 
-      const colleaguesMatch = office?.colleagues?.some(colleague => {
-        if (!colleague) return false;
+      const employeesMatch = department.staff?.some(staff => {
+        if (!staff) return false;
 
-        const fnameMatch = colleague.fname?.toLowerCase().includes(lowercaseQuery) || false;
-        const mnameMatch = colleague.mname?.toLowerCase().includes(lowercaseQuery) || false;
-        const lnameMatch = colleague.lname?.toLowerCase().includes(lowercaseQuery) || false;
-        const positionMatch = colleague.position?.toLowerCase().includes(lowercaseQuery) || false;
+        const fnameMatch = staff.employee.fname?.toLowerCase().includes(lowercaseQuery) || false;
+        const mnameMatch = staff.employee.mname?.toLowerCase().includes(lowercaseQuery) || false;
+        const lnameMatch = staff.employee.lname?.toLowerCase().includes(lowercaseQuery) || false;
+        const positionMatch = staff.employee.position?.toLowerCase().includes(lowercaseQuery) || false;
 
-        const departmentMatch = colleague.employee_departments?.[0]?.office?.toLowerCase().includes(lowercaseQuery) || false;
+        const departmentMatch = staff.employee.employee_departments?.[0]?.office?.toLowerCase().includes(lowercaseQuery) || false;
 
         return fnameMatch || mnameMatch || lnameMatch || positionMatch || departmentMatch;
       }) || false;
 
-      return officeNameMatch || managerMatch || colleaguesMatch;
+      return officeNameMatch || managerMatch || employeesMatch;
     });
   };
 
+  const getDepartmentEmployees = (department: Department): Employee[] => {
+    if (!department.staff || !Array.isArray(department.staff)) {
+      return [];
+    }
+
+    const employees = department.staff
+      .filter(staffItem => staffItem && staffItem.employee)
+      .map(staffItem => staffItem.employee);
+
+    const leadEmployee = employees.find(employee => employee.id === department.lead_id.toString());
+    if (leadEmployee && !employees.some(emp => emp.id === leadEmployee.id)) {
+      employees.unshift(leadEmployee);
+    }
+
+    return employees;
+  };
+
+  const getLeadName = (department: Department): string | undefined => {
+    const leadEmployee = employees.find(employee => {
+      const employeeId = employee.id.toString();
+      const leadId = department.lead_id?.toString();
+      return employeeId === leadId;
+    });
+
+    if (leadEmployee) {
+      const name = `${leadEmployee.lname || ''} ${leadEmployee.fname || ''} ${leadEmployee.mname || ''}`.trim();
+      return name;
+    }
+  }
+
   useEffect(() => {
     if (searchQuery.trim()) {
-      setFilteredOffices(searchOffices(searchQuery, items));
+      setFilteredDepartments(searchDepartments(searchQuery, items));
     } else {
-      setFilteredOffices(items);
+      setFilteredDepartments(items);
     }
   }, [searchQuery, items]);
 
@@ -105,21 +137,21 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
       </div>
 
       <div className="offices-list">
-        {filteredOffices.map(office => {
-          const isExpanded = expandedOffices.has(office.id);
+        {filteredDepartments.map(department => {
+          const isExpanded = expandedOffices.has(department.id.toString());
 
           return (
-            <div key={office.id} className={`office-block ${isExpanded ? 'expanded' : ''}`}>
+            <div key={department.id} className={`office-block ${isExpanded ? 'expanded' : ''}`}>
               <div
                 className="office-header"
-                onClick={() => toggleOffice(office.id)}
+                onClick={() => toggleOffice(department.id.toString())}
               >
                 <div className="office-header-content">
                   <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
                     ❯
                   </span>
 
-                  <span className="office-title">{office.name}</span>
+                  <span className="office-title">{department.name}</span>
 
                   <div className="office-header-right">
                     <div className="office-info-wrapper">
@@ -127,16 +159,15 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
                         <>
                           <button
                             className="info-button"
-                            onMouseEnter={() => handleInfoMouseEnter(office.id)}
+                            onMouseEnter={() => handleInfoMouseEnter(department.id.toString())}
                             onMouseLeave={handleInfoMouseLeave}
-                            title={`Руководитель: ${office.manager}`}
                           >
                             ℹ
                           </button>
 
-                          {hoveredOffice === office.id && (
+                          {hoveredOffice === department.id.toString() && (
                             <div className="manager-tooltip">
-                              Руководитель: {office.manager}
+                              Руководитель: {getLeadName(department)}
                             </div>
                           )}
                         </>
@@ -147,12 +178,12 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
               </div>
 
               {isExpanded && (
-                <div className="office-colleagues">
-                  <ColleaguesList
-                    items={office.colleagues}
-                    onItemClick={handleColleagueClick}
-                    activeColleagueId={activeColleagueId}
-                    onActiveColleagueChange={setActiveColleagueId}
+                <div className="office-employees">
+                  <EmployeesList
+                    items={getDepartmentEmployees(department)}
+                    onItemClick={handleEmployeeClick}
+                    activeEmployeeId={activeEmployeeId}
+                    onActiveEmployeeChange={setActiveEmployeeId}
                   />
                 </div>
               )}
@@ -161,7 +192,7 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, onColleagueSelect }) =
         })}
       </div>
 
-      {searchQuery && filteredOffices.length === 0 && (
+      {searchQuery && filteredDepartments.length === 0 && (
         <div className="no-results">
           Ничего не найдено
         </div>

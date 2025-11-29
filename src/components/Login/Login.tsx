@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginUI from '@ui/Login';
-
-const URL = process.env.HOST;
+import { authAPI } from "@utils/api";
 
 interface LoginProps {
   onLoginSuccess?: () => void;
@@ -20,16 +19,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
   const navigate = useNavigate();
 
   const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await fetch(`${URL}/auth/login/`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'ngrok-skip-browser-warning': '0'
-      },
-      body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
-    });
-
+    const response = await authAPI.login(email, password);
     const data = await response.json();
     if (!response.ok) {
       throw new Error('Ошибка авторизации');

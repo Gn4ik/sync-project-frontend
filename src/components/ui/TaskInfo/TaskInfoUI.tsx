@@ -4,8 +4,8 @@ import '@styles/styles.css';
 import linkIcon from '@icons/LinkIcon.svg';
 import Calendar from '@components/Calendar/Calendar';
 import Popup from '@components/Popup/Popup';
-import Modal from '@components/Modal/Modal';
-import { Colleague, ProjectItem, Status, TaskItem, TaskStatus } from '@types';
+import { Employee, ProjectItem, Status, TaskItem, TaskStatus } from '@types';
+import { TaskModal } from '@components/TaskModal/TaskModal';
 
 interface TaskInfoUIProps {
   selectedTask?: TaskItem | null;
@@ -23,7 +23,7 @@ interface TaskInfoUIProps {
   dropdownRef: React.RefObject<HTMLDivElement>;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   projects: ProjectItem[];
-  colleagues: Colleague[];
+  employees: Employee[];
   parseDate: (dateString: string) => string;
   onTextareaInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onStatusChange: (newStatusId: number) => void;
@@ -33,9 +33,10 @@ interface TaskInfoUIProps {
   onEditTask: () => void;
   onDeleteTask: () => void;
   onEditSubmit: (formData: any) => void;
-  onDeleteSubmit: () => void;
+  onDeleteSubmit: (taskId: number) => void;
   onCloseEditModal: () => void;
   onCloseDeleteModal: () => void;
+  onFileDownload: (fileId: number, fileName: string) => void;
 }
 
 const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
@@ -54,7 +55,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   dropdownRef,
   textareaRef,
   projects,
-  colleagues,
+  employees,
   parseDate,
   onTextareaInput,
   onStatusChange,
@@ -66,7 +67,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   onEditSubmit,
   onDeleteSubmit,
   onCloseEditModal,
-  onCloseDeleteModal
+  onCloseDeleteModal,
+  onFileDownload
 }) => {
 
   if (!selectedTask) {
@@ -80,7 +82,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   }
 
   const [displayStatus, setDisplayStatus] = useState<string>('');
-  
+
   useEffect(() => {
     if (selectedTask && selectedTask.status) {
       setDisplayStatus(selectedTask.status.alias);
@@ -206,6 +208,33 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                   </p>
                 ))}
               </div>
+              
+              {selectedTask.task_files && selectedTask.task_files.length > 0 && (
+                <div className="files-section">
+                  <h3 className="section-title">Файлы:</h3>
+                  <div className="files-list">
+                    {selectedTask.task_files.map((taskFile, index) => (
+                      <div
+                        key={index}
+                        className="file-item"
+                        onClick={() => onFileDownload(taskFile.file.id, taskFile.file.name)}
+                      >
+                        <div className="file-icon">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 4.5L11.5 2M14 4.5V11.5C14 12.0523 13.5523 12.5 13 12.5H3C2.44772 12.5 2 12.0523 2 11.5V2.5C2 1.94772 2.44772 1.5 3 1.5H9.5L14 4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                        <span className="file-name">{taskFile.file.name}</span>
+                        <div className="file-download-icon">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 9.5V1M7 9.5L4.5 7M7 9.5L9.5 7M1 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className='comment-section'>
@@ -247,42 +276,27 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
         </div>
       </div>
 
-      <Modal
+      <TaskModal
         isOpen={isEditModalOpen}
         onClose={onCloseEditModal}
         onSubmit={onEditSubmit}
-        type="task"
+        onDelete={() => { }}
         mode="edit"
         initialData={selectedTask}
         projects={projects}
-        colleagues={colleagues}
+        employees={employees}
       />
 
-      {isDeleteModalOpen && (
-        <div className="modal-overlay" onClick={onCloseDeleteModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Удаление задачи</h2>
-              <button className="modal-close" onClick={onCloseDeleteModal}>×</button>
-            </div>
-            <div style={{ padding: '20px 24px' }}>
-              <p style={{ fontSize: '16px', marginBottom: '20px' }}>
-                Вы уверены, что хотите удалить задачу "{selectedTask?.name}"? Это действие нельзя отменить.
-              </p>
-              <div className="modal-actions">
-                <div className="action-buttons">
-                  <button type="button" className="btn-secondary" onClick={onCloseDeleteModal}>
-                    Отменить
-                  </button>
-                  <button type="button" className="btn-primary" onClick={onDeleteSubmit} style={{ backgroundColor: '#dc3545' }}>
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TaskModal
+        isOpen={isDeleteModalOpen}
+        onClose={onCloseDeleteModal}
+        onSubmit={() => { }}
+        onDelete={onDeleteSubmit}
+        mode="delete"
+        initialData={selectedTask}
+        projects={projects}
+        employees={employees}
+      />
     </>
   );
 };

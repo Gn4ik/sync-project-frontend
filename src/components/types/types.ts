@@ -14,13 +14,6 @@ export type User = {
   name: string;
 }
 
-export type Office = {
-  colleagues: Colleague[];
-  id: string;
-  name: string;
-  manager: string;
-}
-
 export type Schedule = {
   sun_id: number;
   mon_id: number;
@@ -40,12 +33,25 @@ export type Schedule = {
 }
 
 type TaskComment = {
-  author: Colleague;
+  author: Employee;
   author_id: number;
   created_at: string;
   id: number;
   task_id: number;
   text: string;
+}
+
+export type TaskFile = {
+  task_id: number;
+  file_id: number;
+  file: File;
+}
+
+export type File = {
+  id: number;
+  extension: string;
+  name: string;
+  source: string;
 }
 
 export type TaskItem = {
@@ -60,7 +66,7 @@ export type TaskItem = {
   name: string;
   status_id: number;
   task_comments: TaskComment[];
-  task_files: any[];
+  task_files: TaskFile[];
   isExpanded?: boolean;
   isActive?: boolean;
   canEdit?: boolean;
@@ -92,6 +98,15 @@ export type Department = {
   id: number;
   lead_id: number;
   name: string;
+  lead: Employee;
+  staff: StaffItem[];
+}
+
+export type StaffItem = { 
+  department_id: number;
+  employee_id: number;
+  office: string;
+  employee: Employee;
 }
 
 export type EmployeeDepartment = {
@@ -131,7 +146,7 @@ export type ReleaseItem = {
   isActive?: boolean;
 }
 
-export interface Colleague {
+export interface Employee {
   id: string;
   fname: string;
   lname: string;

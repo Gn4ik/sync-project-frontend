@@ -2,23 +2,28 @@ import { useEffect, useRef, useState } from "react";
 import Popup from "../Popup/Popup";
 import releasesActiveIcon from '@icons/releases-active.svg';
 import releasesInactiveIcon from '@icons/releases-inactive.svg';
-import colleagueActiveIcon from '@icons/colleague-active.svg';
-import colleagueInactiveIcon from '@icons/colleague-inactive.svg';
+import employeeActiveIcon from '@icons/colleague-active.svg';
+import employeeInactiveIcon from '@icons/colleague-inactive.svg';
 import plusIcon from '@icons/plus.svg';
 import filtersIcon from '@icons/filters.svg';
 import './NavButtons.css';
-import Modal from "../Modal/Modal";
 import UserModal from "../UserModal/UserModal";
-import { Colleague, ProjectItem } from "@components/types";
+import { Employee, ProjectItem } from "@components/types";
+import { TaskModal } from "@components/TaskModal/TaskModal";
+import { ProjectModal } from "@components/ProjectModal/ProjectModal";
+import { OfficeModal } from "@components/OfficeModal/OfficeModal";
+import { MeetingModal } from "@components/MeetingModal/MeetingModal";
+import { ReleaseModal } from "@components/ReleaseModal/ReleaseModal";
+import { tasksAPI } from "@utils/api";
 
 interface NavButtonsProps {
-  activeList: 'tasks' | 'colleagues';
-  onListChange: (list: 'tasks' | 'colleagues') => void;
+  activeList: 'tasks' | 'employees';
+  onListChange: (list: 'tasks' | 'employees') => void;
   onFilterChange: (filter: string) => void;
   currentFilter: string;
   userRole: 'executor' | 'manager' | 'admin' | null;
   projects: ProjectItem[];
-  colleagues: Colleague[];
+  employees: Employee[];
 }
 
 const managerStatusFilters = [
@@ -31,9 +36,9 @@ const managerStatusFilters = [
   { key: 'closed', label: 'Отменены' },
 ];
 
-const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter, projects, colleagues }: NavButtonsProps) => {
-  const [popup1Open, setIsPopup1Open] = useState(false);
-  const [popup2Open, setIsPopup2Open] = useState(false);
+const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, currentFilter, projects, employees }: NavButtonsProps) => {
+  const [popupAddOpen, setIsPopupAddOpen] = useState(false);
+  const [popupFiltersOpen, setIsPopupFiltersOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonAddRef = useRef<HTMLButtonElement>(null);
   const buttonFilterRef = useRef<HTMLButtonElement>(null);
@@ -73,22 +78,33 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
     setActiveModal(null);
   };
 
-  const handleModalSubmit = (formData: any) => {
-    console.log('Создан:', activeModal, formData);
+  const handleModalSubmit = async (formData: any) => {
+    console.log(formData);
+    try {
+      const response = await tasksAPI.createTask(formData);
+      if (response.ok) {
+        console.log()
+      } else {
+        console.error('Ошибка при создании задачи');
+        console.log(response.json());
+      }
+    } catch (error) {
+      console.error('Ошибка сети:', error);
+    }
     setActiveModal(null);
   };
 
   const addTask = () => {
-    setIsPopup1Open(true);
+    setIsPopupAddOpen(true);
   };
 
   const switchFilters = () => {
-    setIsPopup2Open(true);
+    setIsPopupFiltersOpen(true);
   };
 
   const closePopup = () => {
-    setIsPopup1Open(false);
-    setIsPopup2Open(false);
+    setIsPopupAddOpen(false);
+    setIsPopupFiltersOpen(false);
   };
 
   const handleMyTasksClick = () => {
@@ -110,7 +126,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
       }
     };
 
-    if (popup1Open || popup2Open) {
+    if (popupAddOpen || popupFiltersOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -119,7 +135,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [popup1Open, popup2Open]);
+  }, [popupAddOpen, popupFiltersOpen]);
 
   const showAddButton = userRole === 'manager' || userRole === 'admin';
   const showFilterButton = userRole === 'executor' || userRole === 'manager';
@@ -140,11 +156,11 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
               />
             </button>
             <button
-              className={`list-button ${activeList === 'colleagues' ? 'active' : ''}`}
-              onClick={() => onListChange('colleagues')}
+              className={`list-button ${activeList === 'employees' ? 'active' : ''}`}
+              onClick={() => onListChange('employees')}
             >
               <img
-                src={activeList === 'colleagues' ? colleagueActiveIcon : colleagueInactiveIcon}
+                src={activeList === 'employees' ? employeeActiveIcon : employeeInactiveIcon}
                 alt="Сотрудники"
               />
             </button>
@@ -158,7 +174,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
                 <img src={plusIcon} alt="Добавить" />
               </button>
               <Popup
-                isOpen={popup1Open}
+                isOpen={popupAddOpen}
                 onClose={closePopup}
                 position='left'
                 triggerRef={buttonAddRef}
@@ -182,7 +198,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
                   <img src={plusIcon} alt="Добавить" />
                 </button>
                 <Popup
-                  isOpen={popup1Open}
+                  isOpen={popupAddOpen}
                   onClose={closePopup}
                   position='right'
                   triggerRef={buttonAddRef}
@@ -206,7 +222,7 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
                 </button>
 
                 <Popup
-                  isOpen={popup2Open}
+                  isOpen={popupFiltersOpen}
                   onClose={closePopup}
                   position='left'
                   triggerRef={buttonFilterRef}
@@ -255,40 +271,33 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         )}
       </div>
 
-      <Modal
+      <TaskModal
         isOpen={activeModal === 'task'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        type="task"
+        onDelete={() => { }}
+        employees={employees}
         projects={projects}
-        colleagues={colleagues}
       />
 
-      <Modal
+      <ProjectModal
         isOpen={activeModal === 'project'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        type="project"
-        projects={projects}
-        colleagues={colleagues}
       />
 
-      <Modal
+      <ReleaseModal
         isOpen={activeModal === 'release'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        type="release"
-        projects={projects}
-        colleagues={colleagues}
       />
 
-      <Modal
+      <MeetingModal
         isOpen={activeModal === 'meeting'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        type="meeting"
+        employees={employees}
         projects={projects}
-        colleagues={colleagues}
       />
 
       <UserModal
@@ -297,13 +306,10 @@ const NavButtons = ({ userRole, activeList, onListChange, onFilterChange, curren
         onSubmit={handleModalSubmit}
       />
 
-      <Modal
+      <OfficeModal
         isOpen={activeModal === 'office'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
-        type='office'
-        projects={projects}
-        colleagues={colleagues}
       />
     </>
   );

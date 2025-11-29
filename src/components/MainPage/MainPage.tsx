@@ -3,25 +3,26 @@ import '@styles/styles.css'
 import TaskInfo from "../TaskInfo/TaskInfo";
 import SideBar from "../SideBar/SideBar";
 import { useEffect, useState } from "react";
-import { Colleague, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
-import ColleagueInfo from "../ColleagueInfo/ColleagueInfo";
+import { Department, Employee, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
+import EmployeeInfo from "../EmployeeInfo/EmployeeInfo";
 import Calendar from "../Calendar/Calendar";
 import CalendarEvents from "../CalendarEvents/CalendarEvents";
-
-const URL = process.env.HOST;
+import { authAPI, departmentsAPI, employeesAPI, projectsAPI, releasesAPI, statusAPI, tasksAPI } from "@utils/api";
 
 const MainPage = () => {
 	const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
-	const [selectedColleague, setSelectedColleague] = useState<Colleague | null>(null);
+	const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
 	const [statusesData, setStatusesData] = useState<Status[]>([]);
 
 	const [currentUserRole, setCurrentUserRole] = useState<'executor' | 'manager' | 'admin' | null>(null);
 	const [currentUserId, setCurrentUserId] = useState<number>(0);
-	const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
 
+	const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
 	const [projects, setProjectsData] = useState<ProjectItem[]>([]);
-	const [colleagues, setEmployeesData] = useState<Colleague[]>([]);
+	const [employees, setEmployeesData] = useState<Employee[]>([]);
+	const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
+	const [loading, setLoading] = useState(true);
 
 	const updateTaskInList = (taskId: number, updates: Partial<TaskItem>) => {
 		setReleasesData(prevReleases => {
@@ -37,66 +38,13 @@ const MainPage = () => {
 		});
 	};
 
-	const fetchProjects = async () => {
-		try {
-			const token = localStorage.getItem('auth_token');
-			if (!token) return;
-
-			const response = await fetch(`${URL}/projects/all/`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					'ngrok-skip-browser-warning': '0',
-					"Authorization": `Bearer ${token}`,
-				}
-			});
-
-			if (response.ok) {
-				const projects = await response.json();
-				setProjectsData(projects);
-			}
-		} catch (error) {
-			console.error('Error fetching projects:', error);
-		}
-	};
-
-	const fetchEmployees = async () => {
-		try {
-			const token = localStorage.getItem('auth_token');
-			if (!token) return;
-
-			const response = await fetch(`${URL}/employees/all/`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					'ngrok-skip-browser-warning': '0',
-					"Authorization": `Bearer ${token}`,
-				}
-			});
-
-			if (response.ok) {
-				const employees = await response.json();
-				setEmployeesData(employees);
-			}
-		} catch (error) {
-			console.error('Error fetching employees:', error);
-		}
-	};
-
 	const checkRole = async () => {
 		try {
 			const token = localStorage.getItem('auth_token');
 			if (!token)
 				return;
 
-			const response = await fetch(`${URL}/auth/me/`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					'ngrok-skip-browser-warning': '0',
-					"Authorization": `Bearer ${token}`,
-				}
-			});
+			const response = await authAPI.getMe();
 
 			const data = await response.json();
 
@@ -118,19 +66,38 @@ const MainPage = () => {
 	useEffect(() => {
 		checkRole();
 		const loadAllData = async () => {
-			await Promise.all([fetchProjects(), fetchEmployees()]);
+			try {
+				setLoading(true);
+				const [releases, employees, projects, departments, statuses] = await Promise.all([
+					releasesAPI.getReleases(),
+					employeesAPI.getEmployees(),
+					projectsAPI.getProjects(),
+					departmentsAPI.getDepartments(),
+					statusAPI.getStatuses()
+				]);
+
+				setReleasesData(releases);
+				setEmployeesData(employees);
+				setProjectsData(projects);
+				setDepartmentsData(departments);
+				setStatusesData(statuses);
+			} catch (error) {
+				console.error('Error loading data:', error);
+			} finally {
+				setLoading(false);
+			}
 		};
 		loadAllData();
 	}, []);
 
 	const handleTaskSelect = (task: TaskItem) => {
 		setSelectedTask(task);
-		setSelectedColleague(null);
+		setSelectedEmployee(null);
 		setShowCalendarEvents(false);
 	};
 
-	const handleColleagueSelect = (colleague: Colleague) => {
-		setSelectedColleague(colleague);
+	const handleEmployeeSelect = (employee: Employee) => {
+		setSelectedEmployee(employee);
 		setSelectedTask(null);
 		setShowCalendarEvents(false);
 	};
@@ -138,7 +105,7 @@ const MainPage = () => {
 	const handleCalendarClick = () => {
 		setShowCalendarEvents(prev => !prev);
 		setSelectedTask(null);
-		setSelectedColleague(null);
+		setSelectedEmployee(null);
 	};
 
 	const handleStatusesLoaded = (statuses: Array<{ id: number; alias: string }>) => {
@@ -152,18 +119,8 @@ const MainPage = () => {
 			if (!token) {
 				return;
 			}
-			const response = await fetch(`${URL}/tasks/update/`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'ngrok-skip-browser-warning': '0',
-					"Authorization": `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					id: taskId,
-					status_id: newStatusId
-				})
-			});
+
+			const response = await tasksAPI.updateTask({ id: taskId, status_id: newStatusId });
 
 			if (response.ok) {
 				const newStatus = statusesData.find(status => status.id === newStatusId);
@@ -195,6 +152,11 @@ const MainPage = () => {
 		setReleasesData(releases);
 	};
 
+	const refreshTasks = async () => {
+		const newReleases = await releasesAPI.getReleases();
+		setReleasesData(newReleases);
+	};
+
 	return (
 		<>
 			<AppHeader
@@ -205,14 +167,16 @@ const MainPage = () => {
 			<div className="container-row">
 				<SideBar
 					onTaskSelect={handleTaskSelect}
-					onColleagueSelect={handleColleagueSelect}
+					onEmployeeSelect={handleEmployeeSelect}
 					userRole={currentUserRole}
 					userId={currentUserId}
 					onStatusesLoaded={handleStatusesLoaded}
 					onReleasesLoaded={handleReleasesLoaded}
 					releasesData={releasesData}
-					projects={projects}
-					colleagues={colleagues}
+					departmentsData={departmentsData}
+					projectsData={projects}
+					employeesData={employees}
+					loading={loading}
 				/>
 
 				{selectedTask ? (
@@ -222,14 +186,13 @@ const MainPage = () => {
 						statuses={statusesData}
 						onStatusChange={handleStatusChange}
 						projects={projects}
-						colleagues={colleagues}
+						employees={employees}
 					/>
-				) : selectedColleague ? (
-					<ColleagueInfo
+				) : selectedEmployee ? (
+					<EmployeeInfo
 						userRole={currentUserRole}
-						selectedColleague={selectedColleague}
-						colleagues={colleagues}
-						projects={projects}
+						selectedEmployee={selectedEmployee}
+						departments={departmentsData}
 					/>
 				) : showCalendarEvents ? (
 					<CalendarEvents />

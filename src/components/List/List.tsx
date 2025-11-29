@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './List.css';
-import { Colleague, ListNode, ListProps } from '@types';
+import { Employee, ListNode, ListProps } from '@types';
 import '../../styles/styles';
 
 const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode => {
@@ -92,7 +92,7 @@ const List = ({
   const handleItemClick = (item: ListNode) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpandable = item.type === 'release' || item.type === 'project';
-    const isColleague = item.type === 'colleague';
+    const isEmployee = item.type === 'employee';
     const isTask = item.type === 'task';
 
     if (hasChildren && isExpandable) {
@@ -100,7 +100,7 @@ const List = ({
       return;
     }
 
-    if (isTask || isColleague) {
+    if (isTask || isEmployee) {
       setActiveItemId(item.id);
     }
 
@@ -132,15 +132,15 @@ const List = ({
     const isActive = item.id === activeItemId;
     const showInfoButton = (item.type === 'release' || item.type === 'project') && item.isExpanded;
     const isTask = item.type === 'task';
-    const isColleague = item.type === 'colleague';
+    const isEmployee = item.type === 'employee';
 
     if (renderItem) {
       return renderItem(item, level);
     }
 
-    if (isColleague && item.data) {
-      const colleague = item.data as Colleague;
-      const isColleagueActive = colleague.id === activeItemId;
+    if (isEmployee && item.data) {
+      const employee = item.data as Employee;
+      const isEmployeeActive = employee.id === activeItemId;
 
       return (
         <div
@@ -150,10 +150,10 @@ const List = ({
           <div
             className={`tree-item 
             level-${level} 
-            ${isColleagueActive ? 'active' : ''}
+            ${isEmployeeActive ? 'active' : ''}
             ${canExpand ? 'has-children' : ''}
             ${item.isExpanded ? 'expanded' : ''}
-            colleague-item
+            employee-item
           `}
             onClick={() => handleItemClick(item)}
             style={{
@@ -161,20 +161,20 @@ const List = ({
             }}
           >
             <div className="tree-item-content">
-              <div className="colleague-avatar">
-                {colleague.avatar ? (
-                  <img src={colleague.avatar} alt={colleague.fname} />
+              <div className="employee-avatar">
+                {employee.avatar ? (
+                  <img src={employee.avatar} alt={employee.fname} />
                 ) : (
                   <div className="avatar-placeholder">
-                    {colleague.fname.charAt(0).toUpperCase()}
+                    {employee.fname.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
 
-              <div className="colleague-info">
-                <div className="colleague-name">{colleague.fname} {colleague.mname} {colleague.lname}</div>
-                <div className="colleague-position">{colleague.position}</div>
-                <div className="colleague-department">{colleague.employee_departments?.[0].office}</div>
+              <div className="employee-info">
+                <div className="employee-name">{employee.fname} {employee.mname} {employee.lname}</div>
+                <div className="employee-position">{employee.position}</div>
+                <div className="employee-department">{employee.employee_departments?.[0].office}</div>
               </div>
 
               {showIcons && !canExpand && (

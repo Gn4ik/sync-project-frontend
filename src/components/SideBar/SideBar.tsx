@@ -2,201 +2,81 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Colleague, getAliasFromTaskStatus, ListNode, Office, ProjectItem, ReleaseItem, TaskItem } from '@types';
-import ColleaguesList from '../ColleaguesList/ColleaguesList';
+import { Department, Employee, getAliasFromTaskStatus, ListNode, ProjectItem, ReleaseItem, TaskItem } from '@types';
+import EmployeesList from '../EmployeesList/EmployeesList';
 import InfoModal from '../InfoModal/InfoModal';
 import OfficesList from '../OfficesList/OfficesList';
 import Preloader from '@components/Preloader';
-
-const URL = process.env.HOST;
+import { statusAPI } from '@utils/api';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
-  onColleagueSelect: (colleague: Colleague) => void;
+  onEmployeeSelect: (employee: Employee) => void;
   userRole: 'executor' | 'manager' | 'admin' | null;
   userId: number;
   onStatusesLoaded?: (statuses: Array<{ id: number; alias: string }>) => void;
   onReleasesLoaded?: (releases: ReleaseItem[]) => void;
-  releasesData?: ReleaseItem[];
-  projects: ProjectItem[];
-  colleagues: Colleague[];
+  releasesData: ReleaseItem[];
+  projectsData: ProjectItem[];
+  employeesData: Employee[];
+  departmentsData: Department[];
+  loading?: boolean;
 }
 
 const SideBar = ({
   onTaskSelect,
-  onColleagueSelect,
+  onEmployeeSelect,
   userRole,
   userId,
   onStatusesLoaded,
   onReleasesLoaded,
   releasesData,
-  projects,
-  colleagues
+  projectsData,
+  employeesData,
+  departmentsData,
+  loading = false
 }: SideBarProps) => {
-  const [activeList, setActiveList] = useState<'tasks' | 'colleagues'>('tasks');
+  const [activeList, setActiveList] = useState<'tasks' | 'employees'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
   const [statusesData, setStatusesData] = useState<Array<{ id: number; alias: string }>>([]);
-  const [activeColleagueId, setActiveColleagueId] = useState<string | null>(null);
+  const [activeEmployeeId, setActiveEmployeeId] = useState<string | null>(null);
   const [infoModal, setInfoModal] = useState<{ isOpen: boolean; type: 'release' | 'project' | null; data: any }>({
     isOpen: false,
     type: null,
     data: null
   });
 
-  const [employeesData, setEmployeesData] = useState<Colleague[]>([]);
-  const [departmentsData, setDepartmentsData] = useState<any[]>([]);
-
-  const [loading, setLoading] = useState({
-    tasks: false,
-    colleagues: false,
-    offices: false,
-    statuses: false
-  });
-
-  const hasLoaded = useRef({
-    tasks: false,
-    colleagues: false,
-    offices: false,
-    statuses: false
-  });
-
   const getAuthToken = () => localStorage.getItem('auth_token');
 
-  const fetchData = async (endpoint: string) => {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No auth token');
-    }
-
-    const response = await fetch(`${URL}${endpoint}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': '0',
-        "Authorization": `Bearer ${token}`,
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${endpoint}`);
-    }
-
-    return response.json();
-  };
-
-  const loadReleasesData = async () => {
-    if (hasLoaded.current.tasks && releasesData && releasesData.length > 0) {
-      return releasesData;
-    }
-
-    try {
-      setLoading(prev => ({ ...prev, tasks: true }));
-      const releases = await fetchData('/releases/all/');
-      console.log('Releases loaded:', releases);
-      hasLoaded.current.tasks = true;
-      onReleasesLoaded?.(releases);
-      return releases;
-    } catch (error) {
-      console.error('Releases loading failed:', error);
-      return null;
-    } finally {
-      setLoading(prev => ({ ...prev, tasks: false }));
-    }
-  };
-
-  const currentReleasesData = releasesData && releasesData.length > 0 ? releasesData : (() => {
-    const loadData = async () => {
-      const data = await loadReleasesData();
-      return data || [];
-    };
-    return [];
-  })();
-
-  const loadEmployees = async () => {
-    if (hasLoaded.current.colleagues) {
-      return employeesData;
-    }
-
-    try {
-      setLoading(prev => ({ ...prev, colleagues: true }));
-      const employees = await fetchData('/employees/all/');
-      console.log('Employees loaded:', employees);
-      setEmployeesData(employees);
-      hasLoaded.current.colleagues = true;
-      return employees;
-    } catch (error) {
-      console.error('Employees loading failed:', error);
-      return null;
-    } finally {
-      setLoading(prev => ({ ...prev, colleagues: false }));
-    }
-  };
-
   const loadStatuses = async () => {
-    if (hasLoaded.current.statuses) {
-      return statusesData;
-    }
-
     try {
-      setLoading(prev => ({ ...prev, statuses: true }));
-      const statuses = await fetchData('/statuses/all/');
+      const statuses = await statusAPI.getStatuses();
       console.log('Statuses loaded:', statuses);
       setStatusesData(statuses);
-      hasLoaded.current.statuses = true;
       onStatusesLoaded?.(statuses);
       return statuses;
     } catch (error) {
       console.error('Statuses loading failed:', error);
       return null;
-    } finally {
-      setLoading(prev => ({ ...prev, statuses: false }));
     }
   };
-
-  const loadDepartments = async () => {
-    if (hasLoaded.current.offices) {
-      return departmentsData;
-    }
-
-    try {
-      setLoading(prev => ({ ...prev, offices: true }));
-      const departments = await fetchData('/departments/all/');
-      console.log('Departments loaded:', departments);
-      setDepartmentsData(departments);
-      hasLoaded.current.offices = true;
-      return departments;
-    } catch (error) {
-      console.error('Departments loading failed:', error);
-      return null;
-    } finally {
-      setLoading(prev => ({ ...prev, offices: false }));
-    }
-  };
-
   useEffect(() => {
-    const loadInitialData = async () => {
-      await Promise.all([
-        loadStatuses(),
-        loadReleasesData()
-      ]);
-    };
-
-    loadInitialData();
+    loadStatuses()
   }, []);
 
   useEffect(() => {
-    const loadDataForActiveList = async () => {
-      if (userRole === 'admin') {
-        await loadDepartments();
-      } else if (activeList === 'colleagues' && !hasLoaded.current.colleagues) {
-        await loadEmployees();
-      }
-    };
+    // const loadDataForActiveList = async () => {
+    //   if (userRole === 'admin') {
+    //     await loadDepartments();
+    //   } else if (activeList === 'employees' && !hasLoaded.current.employees) {
+    //     await loadEmployees();
+    //   }
+    // };
 
-    loadDataForActiveList();
+    // loadDataForActiveList();
   }, [activeList, userRole]);
 
-  const handleListChange = (list: 'tasks' | 'colleagues') => {
+  const handleListChange = (list: 'tasks' | 'employees') => {
     setActiveList(list);
   };
 
@@ -271,15 +151,15 @@ const SideBar = ({
     return filterByStatus(data);
   };
 
-  const filteredTasks = getFilteredTasks(currentReleasesData);
+  const filteredTasks = getFilteredTasks(releasesData);
 
   const handleTaskClick = (task: TaskItem) => {
     onTaskSelect(task);
   };
 
-  const handleColleagueClick = (colleague: Colleague) => {
-    setActiveColleagueId(colleague.id);
-    onColleagueSelect(colleague);
+  const handleEmployeeClick = (employee: Employee) => {
+    setActiveEmployeeId(employee.id);
+    onEmployeeSelect(employee);
   };
 
   const handleFilterChange = (filter: string) => {
@@ -304,17 +184,7 @@ const SideBar = ({
     });
   };
 
-  const getCurrentLoadingState = () => {
-    if (userRole === 'admin') {
-      return loading.offices;
-    } else if (activeList === 'tasks') {
-      return loading.tasks;
-    } else {
-      return loading.colleagues;
-    }
-  };
-
-  if (getCurrentLoadingState()) {
+  if (loading) {
     return <div className="sidebar-container"><Preloader /></div>;
   }
 
@@ -326,14 +196,15 @@ const SideBar = ({
         onFilterChange={handleFilterChange}
         currentFilter={taskFilter}
         userRole={userRole}
-        projects={projects}
-        colleagues={colleagues}
+        projects={projectsData}
+        employees={employeesData}
       />
 
       {userRole === 'admin' ? (
         <OfficesList
           items={departmentsData}
-          onColleagueSelect={handleColleagueClick}
+          employees={employeesData}
+          onEmployeeSelect={handleEmployeeClick}
         />
       ) : activeList === 'tasks' ? (
         <TasksList
@@ -342,11 +213,11 @@ const SideBar = ({
           onInfoClick={handleInfoClick}
         />
       ) : (
-        <ColleaguesList
+        <EmployeesList
           items={employeesData}
-          onItemClick={handleColleagueClick}
-          activeColleagueId={activeColleagueId}
-          onActiveColleagueChange={setActiveColleagueId}
+          onItemClick={handleEmployeeClick}
+          activeEmployeeId={activeEmployeeId}
+          onActiveEmployeeChange={setActiveEmployeeId}
         />
       )}
 

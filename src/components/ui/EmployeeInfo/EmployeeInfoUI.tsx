@@ -1,10 +1,10 @@
 import React from 'react';
-import './ColleagueInfo.css';
+import './EmployeeInfo.css';
 import '@styles/styles.css';
 import Calendar from '@components/Calendar/Calendar';
 import Popup from '@components/Popup/Popup';
-import Modal from '@components/Modal/Modal';
-import { Colleague, ProjectItem } from '@types';
+import { Department, Employee, ProjectItem } from '@types';
+import { EmployeeModal } from '@components/EmployeeModal/EmployeeModal';
 
 interface ScheduleDay {
   day: string;
@@ -17,57 +17,57 @@ interface ScheduleDay {
   lunchEnd?: string;
 }
 
-interface ColleagueInfoUIProps {
-  selectedColleague: Colleague | null;
+interface EmployeeInfoUIProps {
+  selectedEmployee: Employee | null;
   userRole: 'executor' | 'manager' | 'admin' | null;
   currentStatus: 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно';
-  colleagueSchedule: ScheduleDay[];
+  employeeSchedule: ScheduleDay[];
   currentDayIndex: number;
   isAdminPopupOpen: boolean;
   isEditModalOpen: boolean;
   isDeleteModalOpen: boolean;
   adminButtonRef: React.RefObject<HTMLButtonElement>;
-  projects: ProjectItem[];
-  colleagues: Colleague[];
+  departments: Department[];
   parseDate: (dateString?: string) => string;
   getStatusClass: (status: string) => string;
   onToggleAdminPopup: () => void;
   onCloseAdminPopup: () => void;
-  onEditColleague: () => void;
-  onDeleteColleague: () => void;
+  onEditEmployee: () => void;
+  onDeleteEmployee: () => void;
   onEditSubmit: (formData: any) => void;
   onDeleteSubmit: () => void;
   onCloseEditModal: () => void;
   onCloseDeleteModal: () => void;
+  employeeDepartment: () => string;
 }
 
-const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
-  selectedColleague,
+const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
+  selectedEmployee,
   userRole,
   currentStatus,
-  colleagueSchedule,
+  employeeSchedule,
   currentDayIndex,
   isAdminPopupOpen,
   isEditModalOpen,
   isDeleteModalOpen,
   adminButtonRef,
-  projects,
-  colleagues,
+  departments,
   parseDate,
   getStatusClass,
   onToggleAdminPopup,
   onCloseAdminPopup,
-  onEditColleague,
-  onDeleteColleague,
+  onEditEmployee,
+  onDeleteEmployee,
   onEditSubmit,
   onDeleteSubmit,
   onCloseEditModal,
-  onCloseDeleteModal
+  onCloseDeleteModal,
+  employeeDepartment
 }) => {
-  if (!selectedColleague) {
+  if (!selectedEmployee) {
     return (
-      <div className="colleague-info-container">
-        <div className="no-colleague-selected">
+      <div className="employee-info-container">
+        <div className="no-employee-selected">
           <p>Выберите сотрудника для просмотра информации</p>
         </div>
       </div>
@@ -75,16 +75,16 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
   }
 
   return (
-    <div className="colleague-info-container">
+    <div className="employee-info-container">
       <div className='line-container'>
         <div className='line status-primary' />
         <div className='container-with-padding'>
-          <div className="colleague-info-page">
+          <div className="employee-info-page">
             <div className="main-info-section">
-              <div className="colleague-info-header">
-                <div className="colleague-main-info">
-                  <div className='colleague-title-container'>
-                    <div className='colleague-title-wrapper'>
+              <div className="employee-info-header">
+                <div className="employee-main-info">
+                  <div className='employee-title-container'>
+                    <div className='employee-title-wrapper'>
                       {userRole === 'admin' && (
                         <div className='admin-popup-wrapper'>
                           <button
@@ -115,13 +115,13 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
                           >
                             <div className='admin-popup-content'>
                               <div className="admin-popup-list">
-                                <div className="admin-popup-item" onClick={onEditColleague}>
+                                <div className="admin-popup-item" onClick={onEditEmployee}>
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M15.222 0.779789C14.1822 -0.259867 12.4992 -0.259992 11.4593 0.779789L1.62336 10.6145C1.5578 10.68 1.50355 10.7653 1.47239 10.8588L0.0330157 15.1764C-0.129484 15.6639 0.335485 16.1297 0.823579 15.9669L5.14177 14.5277C5.23308 14.4973 5.3188 14.444 5.38611 14.3768L15.222 4.54204C16.2593 3.50479 16.2593 1.81704 15.222 0.779789ZM1.61417 14.386L2.33845 12.2133L3.78708 13.6618L1.61417 14.386ZM4.94417 13.051L2.94927 11.0564L11.3015 2.70513L13.2964 4.69982L4.94417 13.051ZM14.3381 3.65826L14.1803 3.81604L12.1854 1.82135L12.3431 1.6636C12.8932 1.1137 13.7881 1.1137 14.3381 1.6636C14.8881 2.21351 14.8881 3.10832 14.3381 3.65826Z" fill="currentColor" />
                                   </svg>
                                   {' '}Изменить
                                 </div>
-                                <div className="admin-popup-item" onClick={onDeleteColleague}>
+                                <div className="admin-popup-item" onClick={onDeleteEmployee}>
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M15.3966 1.89491H10.7304C10.4994 0.819375 9.3634 0 8 0C6.63663 0 5.50065 0.819375 5.26961 1.89491H0.603443C0.270154 1.89491 0 2.11875 0 2.39491V4.66478C0 4.94094 0.270154 5.16478 0.603443 5.16478H1.55236V15.5C1.55236 15.7762 1.82251 16 2.1558 16H13.8442C14.1775 16 14.4476 15.7762 14.4476 15.5V5.16475H15.3966C15.7298 5.16475 16 4.94091 16 4.66475V2.39491C16 2.11875 15.7298 1.89491 15.3966 1.89491ZM8 1C8.69411 1 9.2839 1.37597 9.4893 1.89491H6.5107C6.7161 1.37597 7.30589 1 8 1ZM13.2408 15H2.75924V5.16475H13.2408V15ZM14.7931 4.16475H1.20689V2.89491H14.7931V4.16475ZM5.75594 12.9628V7.33778C5.75594 7.06163 6.0261 6.83778 6.35939 6.83778C6.69268 6.83778 6.96283 7.06163 6.96283 7.33778V12.9628C6.96283 13.2389 6.69268 13.4628 6.35939 13.4628C6.0261 13.4628 5.75594 13.2389 5.75594 12.9628ZM9.03717 12.9628V7.33778C9.03717 7.06163 9.30732 6.83778 9.64061 6.83778C9.9739 6.83778 10.2441 7.06163 10.2441 7.33778V12.9628C10.2441 13.2389 9.9739 13.4628 9.64061 13.4628C9.30732 13.4628 9.03717 13.2389 9.03717 12.9628Z" fill="currentColor" />
                                   </svg>
@@ -132,12 +132,12 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
                           </Popup>
                         </div>
                       )}
-                      <h2 className="colleague-info-name">{selectedColleague.lname} {selectedColleague.fname} {selectedColleague.mname}</h2>
+                      <h2 className="employee-info-name">{selectedEmployee.lname} {selectedEmployee.fname} {selectedEmployee.mname}</h2>
                     </div>
                   </div>
-                  <div className="colleague-info-position">
+                  <div className="employee-info-position">
                     <span className='contact-label'>Должность: </span>
-                    {selectedColleague.position}
+                    {selectedEmployee.position}
                   </div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
                 <div className="contact-info">
                   <div className="contact-row">
                     <span className="contact-label">Офис:</span>
-                    <span className="contact-value">{selectedColleague.employee_departments[0].department.name}{', '}{selectedColleague.employee_departments[0].office}</span>
+                    <span className="contact-value">{employeeDepartment()}</span>
                   </div>
                   <div className="contact-row">
                     <span className="contact-label">Статус:</span>
@@ -156,15 +156,15 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
                   </div>
                   <div className="contact-row">
                     <span className="contact-label">Дата рождения:</span>
-                    <span className="contact-value">{parseDate(selectedColleague.dob)}</span>
+                    <span className="contact-value">{parseDate(selectedEmployee.dob)}</span>
                   </div>
                   <div className="contact-row">
                     <span className="contact-label">Телефон:</span>
-                    <span className="contact-value">{selectedColleague.phone || 'Не указан'}</span>
+                    <span className="contact-value">{selectedEmployee.phone || 'Не указан'}</span>
                   </div>
                   <div className="contact-row">
                     <span className="contact-label">Почта:</span>
-                    <span className="contact-value">{selectedColleague.email || 'Не указана'}</span>
+                    <span className="contact-value">{selectedEmployee.email || 'Не указана'}</span>
                   </div>
                 </div>
               </div>
@@ -175,7 +175,7 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
           <div className="schedule-section">
             <h3 className="section-title">Расписание</h3>
             <div className="daily-schedule-container">
-              {colleagueSchedule.map((schedule, index) => (
+              {employeeSchedule.map((schedule, index) => (
                 <div
                   key={schedule.day}
                   className={`daily-schedule-card ${index === currentDayIndex ? 'current-day' : ''} ${!schedule.isWorking ? 'day-off' : ''}`}
@@ -203,15 +203,12 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
         </div>
       </div>
 
-      <Modal
+      <EmployeeModal
         isOpen={isEditModalOpen}
         onClose={onCloseEditModal}
         onSubmit={onEditSubmit}
-        type="colleague"
         mode="edit"
-        initialData={selectedColleague}
-        projects={projects}
-        colleagues={colleagues}
+        initialData={selectedEmployee}
       />
 
       {isDeleteModalOpen && (
@@ -223,7 +220,7 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
             </div>
             <div style={{ padding: '20px 24px' }}>
               <p style={{ fontSize: '16px', marginBottom: '20px' }}>
-                Вы уверены, что хотите удалить сотрудника "{selectedColleague?.lname} {selectedColleague?.fname} {selectedColleague?.mname}"? Это действие нельзя отменить.
+                Вы уверены, что хотите удалить сотрудника "{selectedEmployee?.lname} {selectedEmployee?.fname} {selectedEmployee?.mname}"? Это действие нельзя отменить.
               </p>
               <div className="modal-actions">
                 <div className="action-buttons">
@@ -243,4 +240,4 @@ const ColleagueInfoUI: React.FC<ColleagueInfoUIProps> = ({
   );
 };
 
-export default ColleagueInfoUI;
+export default EmployeeInfoUI;

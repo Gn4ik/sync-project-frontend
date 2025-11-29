@@ -1,14 +1,13 @@
 import { useRef, useState, useEffect } from 'react';
-import { Colleague, ProjectItem, Schedule } from '@types';
-import ColleagueInfoUI from '@ui/ColleagueInfo';
+import { Department, Employee, Schedule } from '@types';
+import EmployeeInfoUI from '@ui/EmployeeInfo';
 
-interface ColleagueInfoProps {
-  selectedColleague: Colleague | null;
+interface EmployeeInfoProps {
+  selectedEmployee: Employee | null;
   userRole: 'executor' | 'manager' | 'admin' | null;
-  onColleagueEdit?: (colleague: Colleague) => void;
-  onColleagueDelete?: (colleagueId: string) => void;
-  projects: ProjectItem[];
-  colleagues: Colleague[];
+  onEmployeeEdit?: (employee: Employee) => void;
+  onEmployeeDelete?: (employeeId: string) => void;
+  departments: Department[];
 }
 
 interface ScheduleDay {
@@ -22,7 +21,7 @@ interface ScheduleDay {
   lunchEnd?: string;
 }
 
-const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleagueDelete, projects, colleagues }: ColleagueInfoProps) => {
+const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDelete, departments }: EmployeeInfoProps) => {
   const months = [
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
@@ -54,9 +53,9 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
   };
 
   const getCurrentStatus = (): 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно' => {
-    if (!selectedColleague?.schedule) return 'Неизвестно';
+    if (!selectedEmployee?.schedule) return 'Неизвестно';
 
-    const schedule = selectedColleague.schedule;
+    const schedule = selectedEmployee.schedule;
     const currentDayKey = getCurrentDayKey();
     const currentDayIdKey = `${currentDayKey}_id` as keyof Schedule;
 
@@ -84,8 +83,22 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
     return 'Отсутствует';
   };
 
-  const getColleagueSchedule = (): ScheduleDay[] => {
-    if (!selectedColleague?.schedule) {
+  const getEmployeeDepartment = (): string => {
+    const uniqueDepartments = new Set<string>();
+    departments.forEach(department => {
+      department.staff.forEach(staffItem => {
+        if (staffItem.employee?.id === selectedEmployee?.id) {
+          const departmentInfo = `${department.name}, ${staffItem.office}`;
+          uniqueDepartments.add(departmentInfo);
+        }
+      });
+    });
+
+    return Array.from(uniqueDepartments).join('/');
+  }
+
+  const getEmployeeSchedule = (): ScheduleDay[] => {
+    if (!selectedEmployee?.schedule) {
       return daysOfWeek.map((day, index) => ({
         day,
         workHours: index < 5 ? '09:00 - 17:00' : 'Выходной',
@@ -94,7 +107,7 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
       }));
     }
 
-    const schedule = selectedColleague.schedule;
+    const schedule = selectedEmployee.schedule;
 
     const dayMappings = [
       { key: 'mon', idKey: 'mon_id', name: 'Понедельник' },
@@ -147,7 +160,7 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
   };
 
   const currentDayIndex = getCurrentDayIndex();
-  const colleagueSchedule = getColleagueSchedule();
+  const employeeSchedule = getEmployeeSchedule();
 
   useEffect(() => {
     const updateStatus = () => {
@@ -159,7 +172,7 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
     const interval = setInterval(updateStatus, 60000);
 
     return () => clearInterval(interval);
-  }, [selectedColleague]);
+  }, [selectedEmployee]);
 
   const parseDate = (dateString?: string): string => {
     if (!dateString) return 'Не указано';
@@ -176,14 +189,14 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
     }
   };
 
-  const handleEditColleague = () => {
-    console.log('Редактировать сотрудника:', selectedColleague?.id);
+  const handleEditEmployee = () => {
+    console.log('Редактировать сотрудника:', selectedEmployee?.id);
     setIsAdminPopupOpen(false);
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteColleague = () => {
-    console.log('Удалить сотрудника:', selectedColleague?.id);
+  const handleDeleteEmployee = () => {
+    console.log('Удалить сотрудника:', selectedEmployee?.id);
     setIsAdminPopupOpen(false);
     setIsDeleteModalOpen(true);
   };
@@ -191,14 +204,14 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
   const handleEditSubmit = (formData: any) => {
     console.log('Данные для редактирования сотрудника:', formData);
     setIsEditModalOpen(false);
-    onColleagueEdit?.(formData);
+    onEmployeeEdit?.(formData);
   };
 
   const handleDeleteSubmit = () => {
-    console.log('Удаление сотрудника:', selectedColleague?.id);
+    console.log('Удаление сотрудника:', selectedEmployee?.id);
     setIsDeleteModalOpen(false);
-    if (selectedColleague) {
-      onColleagueDelete?.(selectedColleague.id);
+    if (selectedEmployee) {
+      onEmployeeDelete?.(selectedEmployee.id);
     }
   };
 
@@ -232,30 +245,30 @@ const ColleagueInfo = ({ selectedColleague, userRole, onColleagueEdit, onColleag
   };
 
   return (
-    <ColleagueInfoUI
-      selectedColleague={selectedColleague}
+    <EmployeeInfoUI
+      selectedEmployee={selectedEmployee}
       userRole={userRole}
       currentStatus={currentStatus}
-      colleagueSchedule={colleagueSchedule}
+      employeeSchedule={employeeSchedule}
       currentDayIndex={currentDayIndex}
       isAdminPopupOpen={isAdminPopupOpen}
       isEditModalOpen={isEditModalOpen}
       isDeleteModalOpen={isDeleteModalOpen}
       adminButtonRef={adminButtonRef}
-      projects={projects}
-      colleagues={colleagues}
+      departments={departments}
       parseDate={parseDate}
       getStatusClass={getStatusClass}
       onToggleAdminPopup={handleToggleAdminPopup}
       onCloseAdminPopup={handleCloseAdminPopup}
-      onEditColleague={handleEditColleague}
-      onDeleteColleague={handleDeleteColleague}
+      onEditEmployee={handleEditEmployee}
+      onDeleteEmployee={handleDeleteEmployee}
       onEditSubmit={handleEditSubmit}
       onDeleteSubmit={handleDeleteSubmit}
       onCloseEditModal={handleCloseEditModal}
       onCloseDeleteModal={handleCloseDeleteModal}
+      employeeDepartment={getEmployeeDepartment}
     />
   );
 };
 
-export default ColleagueInfo;
+export default EmployeeInfo;

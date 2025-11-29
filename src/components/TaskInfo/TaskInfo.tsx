@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Colleague, getTaskStatusFromAlias, ProjectItem, Status, TaskItem } from '@types';
+import { Employee, getTaskStatusFromAlias, ProjectItem, Status, TaskItem } from '@types';
 import TaskInfoUI from '@ui/TaskInfo';
-
-const URL = process.env.HOST;
+import { tasksAPI } from '@utils/api';
 
 type TaskInfoProps = {
   selectedTask?: TaskItem | null;
@@ -10,7 +9,7 @@ type TaskInfoProps = {
   statuses?: Status[];
   onStatusChange?: (taskId: number, newStatusId: number) => void;
   projects: ProjectItem[];
-  colleagues: Colleague[];
+  employees: Employee[];
 }
 
 const useAutoResizeTextarea = () => {
@@ -31,7 +30,7 @@ const useAutoResizeTextarea = () => {
   return { textareaRef, adjustHeight };
 };
 
-const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, colleagues }: TaskInfoProps) => {
+const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, employees }: TaskInfoProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isManagerPopupOpen, setIsManagerPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -75,6 +74,34 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
     }
   };
 
+  const handleFileDownload = async (fileId: number, fileName: string) => {
+    try {
+
+      const response = await tasksAPI.getTaskFiles(fileId);
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      console.log('Response headers:', response);
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
   const handleClickOutside = (event: MouseEvent) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
       setIsDropdownOpen(false);
@@ -99,15 +126,7 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
       if (!token) {
         return;
       }
-      const response = await fetch(`${URL}/tasks/update/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': '0',
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await tasksAPI.updateTask(formData);
       if (response.ok) {
         setIsEditModalOpen(false);
       }
@@ -117,9 +136,20 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
     }
   };
 
-  const handleDeleteSubmit = () => {
-    console.log('Удаление задачи:', selectedTask?.id);
-    setIsDeleteModalOpen(false);
+  const handleDeleteSubmit = async (taskId: number) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return;
+      }
+      const response = await tasksAPI.deleteTask(taskId);
+      if (response.ok) {
+        setIsDeleteModalOpen(false);
+      }
+    }
+    catch (error) {
+      console.error('Ошибка сети:', error);
+    }
   };
 
   const handleCloseEditModal = () => {
@@ -166,7 +196,7 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
       dropdownRef={dropdownRef}
       textareaRef={textareaRef}
       projects={projects}
-      colleagues={colleagues}
+      employees={employees}
       parseDate={parseDate}
       onTextareaInput={handleTextareaInput}
       onStatusChange={handleStatusChange}
@@ -179,6 +209,7 @@ const TaskInfo = ({ selectedTask, userRole, statuses, onStatusChange, projects, 
       onDeleteSubmit={handleDeleteSubmit}
       onCloseEditModal={handleCloseEditModal}
       onCloseDeleteModal={handleCloseDeleteModal}
+      onFileDownload={handleFileDownload}
     />
   );
 };

@@ -4,8 +4,7 @@ import Login from "../Login/Login";
 import MainPage from '../MainPage/MainPage';
 import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import Preloader from '@components/Preloader';
-
-const URL = process.env.HOST;
+import { authAPI } from '@utils/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
@@ -21,16 +20,8 @@ function App() {
         setIsLoading(false);
         return;
       }
-
-      const response = await fetch(`${URL}/auth/is_token_correct/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': '0',
-          "Authorization": `Bearer ${token}`,
-        }
-      });
-
+      const response = await authAPI.checkToken();
+      
       setIsAuthenticated(response.status === 200);
     } catch (error) {
       console.error('Token check failed:', error);

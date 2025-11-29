@@ -1,21 +1,21 @@
 import React from 'react';
-import { Colleague } from '@types';
-import './ColleaguesList.css';
+import { Employee } from '@types';
+import './EmployeesList.css';
 import searchIcon from '@icons/SearchIcon.svg';
 
-interface ColleaguesListUIProps {
-  items: Colleague[];
+interface EmployeesListUIProps {
+  items: Employee[];
   searchQuery: string;
-  activeColleagueId?: string | null;
-  onItemClick: (colleague: Colleague) => void;
+  activeEmployeeId?: string | null;
+  onItemClick: (employee: Employee) => void;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearSearch: () => void;
 }
 
-const ColleaguesListUI: React.FC<ColleaguesListUIProps> = ({
+const EmployeesListUI: React.FC<EmployeesListUIProps> = ({
   items,
   searchQuery,
-  activeColleagueId,
+  activeEmployeeId,
   onItemClick,
   onSearchChange,
   onClearSearch
@@ -40,27 +40,27 @@ const ColleaguesListUI: React.FC<ColleaguesListUIProps> = ({
           )}
         </div>
       </div>
-      <div className="colleagues-list">
-        {items.map(colleague => (
+      <div className="employees-list">
+        {items.map(employee => (
           <div
-            key={colleague.id}
-            className={`colleague-item ${activeColleagueId === colleague.id ? 'active' : ''}`}
-            onClick={() => onItemClick(colleague)}
+            key={employee.id}
+            className={`employee-item ${activeEmployeeId === employee.id ? 'active' : ''}`}
+            onClick={() => onItemClick(employee)}
           >
-            <div className="colleague-avatar">
-              {colleague.avatar ? (
-                <img src={colleague.avatar} alt={colleague.fname} />
+            <div className="employee-avatar">
+              {employee.avatar ? (
+                <img src={employee.avatar} alt={employee.fname} />
               ) : (
                 <div className="avatar-placeholder">
-                  {colleague.fname.charAt(0).toUpperCase()}
+                  {employee.fname.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
-            <div className="colleague-info">
-              <div className="colleague-name">
-                {colleague.lname} {colleague.fname} {colleague.mname}
+            <div className="employee-info">
+              <div className="employee-name">
+                {employee.lname} {employee.fname} {employee.mname}
               </div>
-              <div className="colleague-position">{colleague.position}</div>
+              <div className="employee-position">{employee.position}</div>
             </div>
           </div>
         ))}
@@ -74,4 +74,4 @@ const ColleaguesListUI: React.FC<ColleaguesListUIProps> = ({
   );
 };
 
-export default ColleaguesListUI;
+export default EmployeesListUI;

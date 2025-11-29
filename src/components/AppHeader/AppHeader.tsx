@@ -6,8 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import Popup from '../Popup/Popup';
 import './AppHeader.css'
 import { useNavigate } from 'react-router-dom';
-
-const URL = process.env.HOST; 
+import { authAPI } from '@utils/api';
 
 interface AppHeaderProps {
   userRole?: 'executor' | 'manager' | 'admin' | null;
@@ -39,13 +38,7 @@ const AppHeader = ({ userRole = 'executor', onCalendarClick, isCalendarActive = 
     localStorage.removeItem('auth_token');
 
     try {
-      await fetch(`${URL}/auth/logout/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': '0'
-        },
-      });
+      await authAPI.logout();
     } catch (error) {
       console.log(error);
     }
