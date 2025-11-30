@@ -8,8 +8,8 @@ interface CalendarEvent {
   date: string;
   time?: string;
   type: 'deadline' | 'meeting';
-  project?: string;
   task?: TaskItem;
+  link?: string;
 }
 
 interface CalendarEventsProps {
@@ -60,6 +60,7 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
             });
 
             calendarDay.timesheet?.forEach(([time, description, url], index) => {
+              if (description.includes('Собрание')) return;
               const taskNameMatch = description.match(/Дедлайн задачи "([^"]+)"/);
               const taskName = taskNameMatch ? taskNameMatch[1] : description;
               const uniqueKey = `${calendarDay.day}-${taskName}`;
@@ -106,10 +107,11 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
 
             events.push({
               id: `meeting-${meeting.id}`,
-              title: `Встреча: ${meeting.name}`,
+              title: `- Встреча: ${meeting.name}`,
               date: meetingDay,
               time: meetingTime,
-              type: 'meeting'
+              type: 'meeting',
+              link: meeting.link
             });
           }
         }
@@ -189,6 +191,13 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
                     >
                       {event.title}
                     </div>
+                    {event.link && (
+                      <div className='event-title-inline meeting'>
+                        {', '}{'Ссылка: '}
+                        <a href={event.link} className='meeting-link'>
+                          {event.link}
+                        </a>
+                      </div>)}
                   </div>
                 ))}
               </div>

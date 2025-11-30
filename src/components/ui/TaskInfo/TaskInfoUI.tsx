@@ -32,7 +32,7 @@ interface TaskInfoUIProps {
   onCloseManagerPopup: () => void;
   onEditTask: () => void;
   onDeleteTask: () => void;
-  onEditSubmit: (formData: any) => void;
+  onEditSubmit: (formData: any) => Promise<boolean>;
   onDeleteSubmit: (taskId: number) => void;
   onCloseEditModal: () => void;
   onCloseDeleteModal: () => void;
@@ -313,7 +313,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
       <TaskModal
         isOpen={isDeleteModalOpen}
         onClose={onCloseDeleteModal}
-        onSubmit={() => { }}
+        onSubmit={() => { return Promise.resolve(false); }}
         onDelete={onDeleteSubmit}
         mode="delete"
         initialData={selectedTask}

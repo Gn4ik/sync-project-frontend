@@ -17,12 +17,13 @@
   border-radius: 10px;
   width: 100%;
   max-width: 800px;
-  max-height: 750px;
+  max-height: 800px;
   overflow: hidden;
   box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  animation: slideUp 0.2s ease;
 }
 
 .modal-header {
@@ -178,10 +179,6 @@
 
 .modal-overlay {
   animation: fadeIn 0.2s ease;
-}
-
-.modal-content {
-  animation: slideUp 0.2s ease;
 }
 
 .form-text {

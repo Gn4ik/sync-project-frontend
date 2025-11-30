@@ -8,23 +8,25 @@ import plusIcon from '@icons/plus.svg';
 import filtersIcon from '@icons/filters.svg';
 import './NavButtons.css';
 import UserModal from "../UserModal/UserModal";
-import { Employee, ProjectItem } from "@components/types";
+import { Employee, ProjectItem, ReleaseItem } from "@components/types";
 import { TaskModal } from "@components/TaskModal/TaskModal";
 import { ProjectModal } from "@components/ProjectModal/ProjectModal";
 import { OfficeModal } from "@components/OfficeModal/OfficeModal";
 import { MeetingModal } from "@components/MeetingModal/MeetingModal";
 import { ReleaseModal } from "@components/ReleaseModal/ReleaseModal";
-import { tasksAPI } from "@utils/api";
+import { departmentsAPI, employeesAPI, meetingsAPI, projectsAPI, releasesAPI, tasksAPI } from "@utils/api";
 
 interface NavButtonsProps {
   activeList: 'tasks' | 'employees';
   onListChange: (list: 'tasks' | 'employees') => void;
   onFilterChange: (filter: string) => void;
   onTaskCreated?: () => void;
+  onProjectCreated?: () => void;
   currentFilter: string;
   userRole: 'executor' | 'manager' | 'admin' | null;
   projects: ProjectItem[];
   employees: Employee[];
+  releases: ReleaseItem[];
 }
 
 const managerStatusFilters = [
@@ -43,9 +45,11 @@ const NavButtons = ({
   onListChange,
   onFilterChange,
   onTaskCreated,
+  onProjectCreated,
   currentFilter,
   projects,
-  employees
+  employees,
+  releases
 }: NavButtonsProps) => {
   const [popupAddOpen, setIsPopupAddOpen] = useState(false);
   const [popupFiltersOpen, setIsPopupFiltersOpen] = useState(false);
@@ -88,21 +92,63 @@ const NavButtons = ({
     setActiveModal(null);
   };
 
-  const handleModalSubmit = async (formData: any) => {
-    console.log(formData);
+  const handleModalSubmit = async (formData: any, type: string) => {
     try {
-      const response = await tasksAPI.createTask(formData);
+      let response: Response;
+      switch (type) {
+        case 'task':
+          response = await tasksAPI.createTask(formData);
+          break;
+        case 'release':
+          response = await releasesAPI.createRelease(formData);
+          break;
+        case 'meeting':
+          response = await meetingsAPI.createMeeting(formData);
+          break;
+        case 'project':
+          response = await projectsAPI.createProject(formData);
+          break;
+        case 'department':
+          response = await departmentsAPI.createDepartment(formData);
+          break;
+        case 'employee':
+          response = await employeesAPI.createEmployee(formData);
+          break;
+        default:
+          console.error(`Неизвестный тип: ${type}`);
+          return false;
+      }
       if (response.ok) {
-        console.log()
+        switch (type) {
+          case 'task':
+            onTaskCreated?.();
+            break;
+          case 'release':
+            onTaskCreated?.();
+            break;
+          // case 'meeting':
+          //   onMeetingCreated?.();
+          //   break;
+          case 'project':
+            onProjectCreated?.();
+            break;
+          // case 'department':
+          //   onDepartmentCreated?.();
+          //   break;
+          // case 'employee':
+          //   onEmployeeCreated?.();
+          //   break;
+        }
+        return true;
       } else {
-        console.error('Ошибка при создании задачи');
+        console.error(`Ошибка при создании ${type}`);
         console.log(response.json());
+        return false;
       }
     } catch (error) {
       console.error('Ошибка сети:', error);
+      return false;
     }
-    onTaskCreated?.()
-    setActiveModal(null);
   };
 
   const addTask = () => {
@@ -295,6 +341,7 @@ const NavButtons = ({
         isOpen={activeModal === 'project'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
+        releases={releases}
       />
 
       <ReleaseModal
@@ -308,7 +355,6 @@ const NavButtons = ({
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         employees={employees}
-        projects={projects}
       />
 
       <UserModal

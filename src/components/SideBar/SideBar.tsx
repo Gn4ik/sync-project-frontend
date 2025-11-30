@@ -14,6 +14,7 @@ interface SideBarProps {
   userRole: 'executor' | 'manager' | 'admin' | null;
   userId: number;
   onTasksUpdate?: () => void;
+  onProjectsUpdate?: () => void;
   releasesData: ReleaseItem[];
   projectsData: ProjectItem[];
   employeesData: Employee[];
@@ -27,6 +28,7 @@ const SideBar = ({
   userRole,
   userId,
   onTasksUpdate,
+  onProjectsUpdate,
   releasesData,
   projectsData,
   employeesData,
@@ -164,7 +166,9 @@ const SideBar = ({
         userRole={userRole}
         projects={projectsData}
         employees={employeesData}
+        onProjectCreated={onProjectsUpdate}
         onTaskCreated={onTasksUpdate}
+        releases={releasesData}
       />
 
       {userRole === 'admin' ? (

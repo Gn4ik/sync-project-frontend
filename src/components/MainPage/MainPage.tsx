@@ -125,11 +125,6 @@ const MainPage = () => {
 		setSelectedEmployee(null);
 	};
 
-	const handleStatusesLoaded = (statuses: Array<{ id: number; alias: string }>) => {
-		console.log('Statuses received in MainPage:', statuses);
-		setStatusesData(statuses);
-	};
-
 	const handleStatusChange = async (taskId: number, newStatusId: number) => {
 		try {
 			const token = localStorage.getItem('auth_token');
@@ -174,6 +169,16 @@ const MainPage = () => {
 		}
 	};
 
+	const refreshProjects = async () => {
+		refreshTasks();
+		try {
+			const newProjects = await projectsAPI.getProjects();
+			setProjectsData(newProjects);
+		} catch (error) {
+			console.error('Error refreshing tasks:', error);
+		}
+	}
+
 	const refreshSelectedTask = async (taskId: number) => {
 		try {
 			setTaskInfoLoading(true);
@@ -202,6 +207,7 @@ const MainPage = () => {
 					userRole={currentUserRole}
 					userId={currentUserId}
 					onTasksUpdate={refreshTasks}
+					onProjectsUpdate={refreshProjects}
 					releasesData={releasesData}
 					departmentsData={departmentsData}
 					projectsData={projects}

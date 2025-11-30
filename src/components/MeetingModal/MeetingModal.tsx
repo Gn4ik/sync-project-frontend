@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@components/Modal/Modal';
 import { Employee, ProjectItem } from '@components/types';
+import { SuccessModal } from '@components/SuccessModal/SuccessModal';
 
 interface MeetingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialData?: any;
   employees: Employee[];
-  projects: ProjectItem[];
 }
 
 export const MeetingModal = ({
@@ -18,42 +18,43 @@ export const MeetingModal = ({
   onSubmit,
   mode = 'create',
   initialData,
-  employees,
-  projects
+  employees
 }: MeetingModalProps) => {
   const [formData, setFormData] = useState({
-    title: '',
-    project: '',
-    participants: [] as string[],
+    name: '',
+    employees: [] as string[],
     meetingDate: '',
     meetingTime: '',
     description: '',
+    link: ''
   });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen && mode === 'edit' && initialData) {
       setFormData({
-        title: initialData.name || '',
-        project: initialData.project_id?.toString() || '',
-        participants: initialData.participants || [],
+        name: initialData.name || '',
+        employees: initialData.employees || [],
         meetingDate: initialData.meetingDate || '',
         meetingTime: initialData.meetingTime || '',
         description: initialData.description || '',
+        link: initialData.link || ''
       });
     } else if (isOpen) {
       setFormData({
-        title: '',
-        project: '',
-        participants: [],
+        name: '',
+        employees: [],
         meetingDate: '',
         meetingTime: '',
         description: '',
+        link: ''
       });
+      setIsSuccess(false);
     }
     setSearchTerm('');
     setShowDropdown(false);
@@ -83,14 +84,14 @@ export const MeetingModal = ({
   const handleParticipantToggle = (employeeId: string) => {
     setFormData(prev => ({
       ...prev,
-      participants: prev.participants.includes(employeeId)
-        ? prev.participants.filter(id => id !== employeeId)
-        : [...prev.participants, employeeId]
+      employees: prev.employees.includes(employeeId)
+        ? prev.employees.filter(id => id !== employeeId)
+        : [...prev.employees, employeeId]
     }));
   };
 
   const getSelectedParticipantsNames = () => {
-    return formData.participants.map(id =>
+    return formData.employees.map(id =>
       employees.find(c => c.id === id)?.fname + ' ' + employees.find(c => c.id === id)?.lname
     ).filter(Boolean).join(', ');
   };
@@ -104,25 +105,57 @@ export const MeetingModal = ({
 
   const getInputDisplayValue = () => {
     if (searchTerm) return searchTerm;
-    if (formData.participants.length > 0) return getSelectedParticipantsNames();
+    if (formData.employees.length > 0) return getSelectedParticipantsNames();
     return '';
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    if (formData.participants.length > 0 && e.target.value) {
+    if (formData.employees.length > 0 && e.target.value) {
       setFormData(prev => ({ ...prev, participants: [] }));
     }
   };
 
-  const handleSubmit = () => {
-    onSubmit({
-      ...formData,
-      type: 'meeting'
-    });
+  const handleSubmit = async () => {
+    const submitData = {
+      name: formData.name,
+      description: formData.description,
+      date: `${formData.meetingDate} ${formData.meetingTime}:00`,
+      link: formData.link,
+      employees: formData.employees.map(id => parseInt(id)),
+    };
+    const success = await onSubmit(submitData, 'meeting');
+
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 5000);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setIsSuccess(false);
+    onClose();
+  };
+
+  const getSuccessMessage = () => {
+    if (mode === 'edit') return 'Встреча успешно обновлена!';
+    return 'Встреча успешно создана!';
   };
 
   const title = mode === 'edit' ? 'Редактировать встречу' : 'Создать встречу';
+
+  if (isSuccess) {
+    return (
+      <SuccessModal
+        isOpen={isOpen}
+        handleSuccessClose={handleSuccessClose}
+        message={getSuccessMessage}
+      />
+    );
+  }
 
   return (
     <Modal
@@ -139,27 +172,10 @@ export const MeetingModal = ({
             type="text"
             className="form-input form-text"
             placeholder="Введите название встречи"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
             required
           />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Проект:</label>
-          <select
-            className="form-select form-text"
-            value={formData.project}
-            onChange={(e) => handleChange('project', e.target.value)}
-            required
-          >
-            <option value="" disabled hidden>Выберите проект</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id} className='form-select-item'>
-                {project.name}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="form-group">
@@ -169,7 +185,7 @@ export const MeetingModal = ({
               ref={inputRef}
               type="text"
               className="form-input form-text"
-              placeholder={formData.participants.length === 0 ? "Поиск сотрудников..." : ""}
+              placeholder={formData.employees.length === 0 ? "Поиск сотрудников..." : ""}
               value={getInputDisplayValue()}
               onChange={handleInputChange}
               onFocus={() => setShowDropdown(true)}
@@ -179,7 +195,7 @@ export const MeetingModal = ({
                 {filteredEmployees.map(employee => (
                   <div
                     key={employee.id}
-                    className={`participant-option ${formData.participants.includes(employee.id) ? 'selected' : ''}`}
+                    className={`participant-option ${formData.employees.includes(employee.id) ? 'selected' : ''}`}
                     onClick={() => handleParticipantToggle(employee.id)}
                   >
                     <div className="participant-info">
@@ -187,13 +203,13 @@ export const MeetingModal = ({
                       <div className="participant-position">{employee.position}</div>
                     </div>
                     <div className="participant-checkbox">
-                      {formData.participants.includes(employee.id) ? '✓' : ''}
+                      {formData.employees.includes(employee.id) ? '✓' : ''}
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {formData.participants.length > 0 && (
+            {formData.employees.length > 0 && (
               <div className="selected-participants">
                 <div className="selected-participants-label">Выбрано: {getSelectedParticipantsNames()}</div>
               </div>
@@ -219,6 +235,17 @@ export const MeetingModal = ({
               required
             />
           </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Ссылка:</label>
+          <input
+            type="text"
+            className="form-input form-text"
+            placeholder="Введите ссылку на встречу"
+            value={formData.link}
+            onChange={(e) => handleChange('link', e.target.value)}
+          />
         </div>
       </div>
 

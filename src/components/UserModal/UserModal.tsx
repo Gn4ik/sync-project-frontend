@@ -5,7 +5,7 @@ import './UserModal.css';
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => void;
 }
 
 const UserModal = ({ isOpen, onClose, onSubmit }: UserModalProps) => {
@@ -29,7 +29,7 @@ const UserModal = ({ isOpen, onClose, onSubmit }: UserModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit(formData, 'employee');
     setFormData({
       fullName: '',
       role: '',

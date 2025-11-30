@@ -4,7 +4,7 @@ import { Modal } from '@components/Modal/Modal';
 interface OfficeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => void;
   mode?: 'create' | 'edit';
   initialData?: any;
 }
@@ -40,10 +40,7 @@ export const OfficeModal = ({
   };
 
   const handleSubmit = () => {
-    onSubmit({
-      ...formData,
-      type: 'office'
-    });
+    onSubmit(formData, 'department');
   };
 
   const title = mode === 'edit' ? 'Редактировать офис' : 'Добавить офис';

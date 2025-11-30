@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '@components/Modal/Modal';
-import { ProjectItem } from '@components/types';
+import { ReleaseItem } from '@components/types';
+import { SuccessModal } from '@components/SuccessModal/SuccessModal';
 
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialData?: any;
+  releases: ReleaseItem[]
 }
 
 export const ProjectModal = ({
@@ -15,42 +17,46 @@ export const ProjectModal = ({
   onClose,
   onSubmit,
   mode = 'create',
-  initialData
+  initialData,
+  releases
 }: ProjectModalProps) => {
   const [formData, setFormData] = useState({
-    title: '',
+    name: '',
     link: '',
-    end_date: '',
+    release_id: '',
     description: '',
   });
 
+  const [isSuccess, setIsSuccess] = useState(false);
+
   useEffect(() => {
     if (isOpen && mode === 'edit' && initialData) {
-      const formatDateForInput = (dateString: string) => {
-        if (!dateString) return '';
-        try {
-          if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
-          if (dateString.includes('T')) return dateString.split('T')[0];
-          const date = new Date(dateString);
-          return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
-        } catch {
-          return '';
-        }
-      };
+      // const formatDateForInput = (dateString: string) => {
+      //   if (!dateString) return '';
+      //   try {
+      //     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
+      //     if (dateString.includes('T')) return dateString.split('T')[0];
+      //     const date = new Date(dateString);
+      //     return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+      //   } catch {
+      //     return '';
+      //   }
+      // };
 
       setFormData({
-        title: initialData.name || '',
+        name: initialData.name || '',
         link: initialData.link || '',
-        end_date: formatDateForInput(initialData.end_date) || '',
+        release_id: initialData.release_id || '',
         description: initialData.description || '',
       });
     } else if (isOpen) {
       setFormData({
-        title: '',
+        name: '',
         link: '',
-        end_date: '',
+        release_id: '',
         description: '',
       });
+      setIsSuccess(false);
     }
   }, [isOpen, initialData, mode]);
 
@@ -58,21 +64,51 @@ export const ProjectModal = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    onSubmit({
+  const handleSubmit = async () => {
+    const DataToSend = {
       ...formData,
-      type: 'project'
-    });
+      status_id: 0
+    };
+
+    const success = await onSubmit(DataToSend, 'project');
+
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 5000);
+    }
   };
 
-  const title = mode === 'edit' ? 'Редактировать проект' : 'Создать проект';
+  const handleSuccessClose = () => {
+    setIsSuccess(false);
+    onClose();
+  };
+
+  const getSuccessMessage = () => {
+    if (mode === 'edit') return 'Проект успешно обновлен!';
+    return 'Проект успешно создан!';
+  };
+
+  const name = mode === 'edit' ? 'Редактировать проект' : 'Создать проект';
+
+  if (isSuccess) {
+    return (
+      <SuccessModal
+        isOpen={isOpen}
+        handleSuccessClose={handleSuccessClose}
+        message={getSuccessMessage}
+      />
+    );
+  }
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-      title={title}
+      title={name}
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
     >
       <div className="form-section">
@@ -82,13 +118,13 @@ export const ProjectModal = ({
             type="text"
             className="form-input form-text"
             placeholder="Введите название проекта"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
             required
           />
         </div>
 
-        <div className="form-group">
+        {/* <div className="form-group">
           <label className="form-label">Ссылка:</label>
           <input
             type="text"
@@ -98,16 +134,23 @@ export const ProjectModal = ({
             onChange={(e) => handleChange('link', e.target.value)}
             required
           />
-        </div>
+        </div> */}
 
         <div className="form-group">
-          <label className="form-label">Срок:</label>
-          <input
-            type="date"
-            className="form-input form-text"
-            value={formData.end_date}
-            onChange={(e) => handleChange('end_date', e.target.value)}
-          />
+          <label className="form-label">Релиз:</label>
+          <select
+            className="form-select form-text"
+            value={formData.release_id}
+            onChange={(e) => handleChange('release_id', e.target.value)}
+            required
+          >
+            <option value="" disabled hidden>Выберите релиз</option>
+            {releases.map(release => (
+              <option key={release.id} value={release.id} className='form-select-item'>
+                {release.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '@components/Modal/Modal';
+import { SuccessModal } from '@components/SuccessModal/SuccessModal';
 
 interface ReleaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialData?: any;
 }
@@ -17,11 +18,13 @@ export const ReleaseModal = ({
   initialData
 }: ReleaseModalProps) => {
   const [formData, setFormData] = useState({
-    title: '',
+    name: '',
     version: '',
     end_date: '',
     description: '',
   });
+
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen && mode === 'edit' && initialData) {
@@ -38,18 +41,19 @@ export const ReleaseModal = ({
       };
 
       setFormData({
-        title: initialData.name || '',
+        name: initialData.name || '',
         version: initialData.version || '',
         end_date: formatDateForInput(initialData.end_date) || '',
         description: initialData.description || '',
       });
     } else if (isOpen) {
       setFormData({
-        title: '',
+        name: '',
         version: '',
         end_date: '',
         description: '',
       });
+      setIsSuccess(false);
     }
   }, [isOpen, initialData, mode]);
 
@@ -57,21 +61,51 @@ export const ReleaseModal = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    onSubmit({
+  const handleSubmit = async () => {
+    const DataToSend = {
       ...formData,
-      type: 'release'
-    });
+      status_id: 0
+    };
+
+    const success = await onSubmit(DataToSend, 'release');
+
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 5000);
+    }
   };
 
-  const title = mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз';
+  const handleSuccessClose = () => {
+    setIsSuccess(false);
+    onClose();
+  };
+
+  const getSuccessMessage = () => {
+    if (mode === 'edit') return 'Релиз успешно обновлен!';
+    return 'Релиз успешно создан!';
+  };
+
+  const name = mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз';
+
+  if (isSuccess) {
+    return (
+      <SuccessModal
+        isOpen={isOpen}
+        handleSuccessClose={handleSuccessClose}
+        message={getSuccessMessage}
+      />
+    );
+  }
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-      title={title}
+      title={name}
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
     >
       <div className="form-section">
@@ -81,8 +115,8 @@ export const ReleaseModal = ({
             type="text"
             className="form-input form-text"
             placeholder="Введите название релиза"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
             required
           />
         </div>

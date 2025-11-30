@@ -109,7 +109,7 @@ export const tasksAPI = {
     const response = await fetch(`${URL}/tasks/comments/add/`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({task_id: taskId, text: text})
+      body: JSON.stringify({ task_id: taskId, text: text })
     });
     return response;
   }
@@ -124,14 +124,14 @@ export const projectsAPI = {
     return response.json();
   },
 
-  // createProject: async (projectData: any) => {
-  //   const response = await fetch(`${URL}/projects/`, {
-  //     method: 'POST',
-  //     headers: getAuthHeaders(),
-  //     body: JSON.stringify(projectData),
-  //   });
-  //   return response.json();
-  // },
+  createProject: async (projectData: any) => {
+    const response = await fetch(`${URL}/projects/add/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(projectData),
+    });
+    return response;
+  },
 };
 
 export const employeesAPI = {
@@ -149,7 +149,16 @@ export const employeesAPI = {
       headers: getAuthHeaders(),
     });
     return response.json();
-  }
+  },
+
+  createEmployee: async (employeeData: any) => {
+    const response = await fetch(`${URL}/auth/register/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(employeeData)
+    });
+    return response;
+  },
 };
 
 export const statusAPI = {
@@ -171,17 +180,16 @@ export const meetingsAPI = {
     return response.json();
   },
 
-}
+  createMeeting: async (meetingData: any) => {
+    const response = await fetch(`${URL}/meetings/add/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(meetingData)
+    });
+    return response;
+  },
 
-//   createMeeting: async (meetingData: any) => {
-//     const response = await fetch(`${URL}/meetings/`, {
-//       method: 'POST',
-//       headers: getAuthHeaders(),
-//       body: JSON.stringify(meetingData),
-//     });
-//     return response.json();
-//   },
-// };
+}
 
 export const releasesAPI = {
   getReleases: async () => {
@@ -191,6 +199,15 @@ export const releasesAPI = {
     });
     return response.json();
   },
+
+  createRelease: async (releaseData: any) => {
+    const response = await fetch(`${URL}/releases/add/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(releaseData)
+    });
+    return response;
+  }
 };
 
 export const departmentsAPI = {
@@ -200,5 +217,14 @@ export const departmentsAPI = {
       headers: getAuthHeaders(),
     });
     return response.json();
+  },
+
+  createDepartment: async (departmentData: any) => {
+    const response = await fetch(`${URL}/departments/add/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(departmentData)
+    });
+    return response;
   },
 };

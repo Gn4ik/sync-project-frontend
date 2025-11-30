@@ -2,23 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@components/Modal/Modal';
 import { Employee, ProjectItem } from '@components/types';
 import './TaskModal.css';
+import { SuccessModal } from '@components/SuccessModal/SuccessModal';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any, type: string) => Promise<boolean>;
   onDelete: (taskId: number) => void;
   mode?: 'create' | 'edit' | 'delete';
   initialData?: any;
   employees: Employee[];
   projects: ProjectItem[];
-}
-
-interface FileItem {
-  id?: number;
-  name: string;
-  file?: File;
-  url?: string;
 }
 
 export const TaskModal = ({
@@ -40,6 +34,7 @@ export const TaskModal = ({
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [isSuccess, setIsSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const showDeleteConfirm = mode === 'delete';
@@ -82,6 +77,7 @@ export const TaskModal = ({
         description: '',
       });
       setFiles([]);
+      setIsSuccess(false);
     }
   }, [isOpen, initialData, mode]);
 
@@ -102,7 +98,9 @@ export const TaskModal = ({
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    let success = false;
+
     if (mode === 'edit') {
       const taskData = {
         id: initialData ? initialData.id : 0,
@@ -112,9 +110,8 @@ export const TaskModal = ({
         project_id: parseInt(formData.project) || 0,
         executor_id: parseInt(formData.assignee) || 0
       };
-      onSubmit(taskData);
+      await onSubmit(taskData, 'task');
     } else if (mode === 'create') {
-
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.title);
       formDataToSend.append('description', formData.description);
@@ -123,19 +120,37 @@ export const TaskModal = ({
       formDataToSend.append('executor_id', formData.assignee);
       formDataToSend.append('status_id', '0');
 
-      const startDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date().toLocaleDateString('en-CA');
       formDataToSend.append('start_date', startDate);
       files.forEach((file, index) => {
         formDataToSend.append('files', file);
       });
 
-      onSubmit(formDataToSend);
+      success = await onSubmit(formDataToSend, 'task');
     }
+
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 5000);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setIsSuccess(false);
+    onClose();
   };
 
   const handleDelete = () => {
     onDelete(initialData.id);
   }
+
+  const getSuccessMessage = () => {
+    if (mode === 'edit') return 'Задача успешно обновлена!';
+    return 'Задача успешно создана!';
+  };
 
   const triggerFileInput = () => {
     if (fileInputRef.current) {
@@ -163,6 +178,16 @@ export const TaskModal = ({
           </p>
         </div>
       </Modal>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <SuccessModal
+        isOpen={isOpen}
+        handleSuccessClose={handleSuccessClose}
+        message={getSuccessMessage}
+      />
     );
   }
 
@@ -265,7 +290,6 @@ export const TaskModal = ({
                 style={{ display: 'none' }}
               />
             </div>
-
 
             {files.length > 0 && (
               <div className="file-list">

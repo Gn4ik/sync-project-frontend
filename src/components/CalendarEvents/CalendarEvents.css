@@ -62,3 +62,16 @@
   color: #0B57D0;
   font-weight: 500;
 }
+
+.meeting-link {
+  margin-left: 3px;
+  font-weight: 500;
+  font-size: 16px;
+  color: #0B57D0;
+  text-decoration: none;
+}
+
+.meeting-link:hover {
+  color: #05398b;
+  text-decoration: underline;
+}

@@ -13,7 +13,7 @@ type TaskInfoProps = {
   projects: ProjectItem[];
   employees: Employee[];
   onTaskUpdate?: () => void;
-  loading?: boolean;  
+  loading?: boolean;
 }
 
 const useAutoResizeTextarea = () => {
@@ -136,13 +136,13 @@ const TaskInfo = ({
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        return;
+        return false;
       }
       const response = await tasksAPI.updateTask(formData);
       if (response.ok) {
         onTaskUpdate?.();
         setIsEditModalOpen(false);
-        
+
         if (selectedTask) {
           const updatedTaskResponse = await tasksAPI.getTasksById(selectedTask.id);
           if (updatedTaskResponse.ok) {
@@ -151,9 +151,10 @@ const TaskInfo = ({
           }
         }
       }
-    }
-    catch (error) {
+      return response.ok;
+    } catch (error) {
       console.error('Ошибка сети:', error);
+      return false;
     }
   };
 
@@ -165,7 +166,7 @@ const TaskInfo = ({
       }
       const response = await tasksAPI.deleteTask(taskId);
       if (response.ok) {
-        setIsDeleteModalOpen(false);  
+        setIsDeleteModalOpen(false);
         onTaskUpdate?.();
       }
     }
@@ -217,7 +218,7 @@ const TaskInfo = ({
     };
   }, []);
 
-  if(loading) 
+  if (loading)
     return <Preloader />
 
   return (
