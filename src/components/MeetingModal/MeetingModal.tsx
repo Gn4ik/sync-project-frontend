@@ -7,6 +7,7 @@ interface MeetingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (formData: any, type: string) => Promise<boolean>;
+  onMeetingsUpdate: () => void;
   mode?: 'create' | 'edit';
   initialData?: any;
   employees: Employee[];
@@ -16,6 +17,7 @@ export const MeetingModal = ({
   isOpen,
   onClose,
   onSubmit,
+  onMeetingsUpdate,
   mode = 'create',
   initialData,
   employees
@@ -132,6 +134,7 @@ export const MeetingModal = ({
         setIsSuccess(false);
         onClose();
       }, 5000);
+      onMeetingsUpdate();
     }
   };
 

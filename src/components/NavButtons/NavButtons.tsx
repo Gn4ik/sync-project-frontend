@@ -22,6 +22,7 @@ interface NavButtonsProps {
   onFilterChange: (filter: string) => void;
   onTaskCreated?: () => void;
   onProjectCreated?: () => void;
+  onMeetingCreated: () => void;
   currentFilter: string;
   userRole: 'executor' | 'manager' | 'admin' | null;
   projects: ProjectItem[];
@@ -46,6 +47,7 @@ const NavButtons = ({
   onFilterChange,
   onTaskCreated,
   onProjectCreated,
+  onMeetingCreated,
   currentFilter,
   projects,
   employees,
@@ -126,9 +128,9 @@ const NavButtons = ({
           case 'release':
             onTaskCreated?.();
             break;
-          // case 'meeting':
-          //   onMeetingCreated?.();
-          //   break;
+          case 'meeting':
+            onMeetingCreated?.();
+            break;
           case 'project':
             onProjectCreated?.();
             break;
@@ -352,6 +354,7 @@ const NavButtons = ({
 
       <MeetingModal
         isOpen={activeModal === 'meeting'}
+        onMeetingsUpdate={onMeetingCreated}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
         employees={employees}

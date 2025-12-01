@@ -22,7 +22,7 @@ const MainPage = () => {
 	const [releasesData, setReleasesData] = useState<ReleaseItem[]>([]);
 	const [projects, setProjectsData] = useState<ProjectItem[]>([]);
 	const [calendarData, setCalendarData] = useState<CalendarItem[]>([]);
-	const [meetengsData, setMeetingsData] =  useState<Meeting[]>([]);
+	const [meetengsData, setMeetingsData] = useState<Meeting[]>([]);
 	const [employees, setEmployeesData] = useState<Employee[]>([]);
 	const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -66,46 +66,57 @@ const MainPage = () => {
 		}
 	};
 
-	function getDateInTwoWeeks() {
+	function getDateInMonth() {
 		const today = new Date();
-		const inTwoWeeks = new Date(today);
-		inTwoWeeks.setDate(today.getDate() + 14);
-		return inTwoWeeks.toISOString().split('T')[0];
+		const monthlater = new Date(today);
+		monthlater.setDate(today.getDate() + 30);
+		return monthlater.toISOString().split('T')[0];
 	}
 
 	const today = new Date().toISOString().split('T')[0];
-	const twoWeeksLater = getDateInTwoWeeks();
+	const monthLater = getDateInMonth();
 
 	useEffect(() => {
-		checkRole();
-		const loadAllData = async () => {
+		const loadInitialData = async () => {
+			setLoading(true);
+
 			try {
-				setLoading(true);
-				const [releases, employees, projects, departments, statuses, calendar, meetengs] = await Promise.all([
+				await checkRole();
+				const [
+					releases,
+					employees,
+					projects,
+					departments,
+					statuses,
+					calendar,
+					meetings
+				] = await Promise.allSettled([
 					releasesAPI.getReleases(),
 					employeesAPI.getEmployees(),
 					projectsAPI.getProjects(),
 					departmentsAPI.getDepartments(),
 					statusAPI.getStatuses(),
-					employeesAPI.getEmployeeCalendar(today, twoWeeksLater),
+					employeesAPI.getEmployeeCalendar(today, monthLater),
 					meetingsAPI.getMeetings()
 				]);
 
-				setReleasesData(releases);
-				setEmployeesData(employees);
-				setProjectsData(projects);
-				setDepartmentsData(departments);
-				setStatusesData(statuses);
-				setCalendarData(calendar);
-				setMeetingsData(meetengs);
+				setReleasesData(releases.status === 'fulfilled' ? releases.value : []);
+				setEmployeesData(employees.status === 'fulfilled' ? employees.value : []);
+				setProjectsData(projects.status === 'fulfilled' ? projects.value : []);
+				setDepartmentsData(departments.status === 'fulfilled' ? departments.value : []);
+				setStatusesData(statuses.status === 'fulfilled' ? statuses.value : []);
+				setCalendarData(calendar.status === 'fulfilled' ? calendar.value : []);
+				setMeetingsData(meetings.status === 'fulfilled' ? meetings.value : []);
+
 			} catch (error) {
 				console.error('Error loading data:', error);
 			} finally {
 				setLoading(false);
 			}
 		};
-		loadAllData();
-	}, []);
+
+		loadInitialData();
+	}, [today]);
 
 	const handleTaskSelect = (task: TaskItem) => {
 		setSelectedTask(task);
@@ -175,7 +186,17 @@ const MainPage = () => {
 			const newProjects = await projectsAPI.getProjects();
 			setProjectsData(newProjects);
 		} catch (error) {
-			console.error('Error refreshing tasks:', error);
+			console.error('Error refreshing projects:', error);
+		}
+	}
+
+	const refreshMeetings = async () => {
+		refreshTasks();
+		try {
+			const newMeetings = await meetingsAPI.getMeetings();
+			setMeetingsData(newMeetings);
+		} catch (error) {
+			console.error('Error refreshing meetings:', error);
 		}
 	}
 
@@ -208,6 +229,7 @@ const MainPage = () => {
 					userId={currentUserId}
 					onTasksUpdate={refreshTasks}
 					onProjectsUpdate={refreshProjects}
+					onMeetengsUpdate={refreshMeetings}
 					releasesData={releasesData}
 					departmentsData={departmentsData}
 					projectsData={projects}
@@ -224,10 +246,12 @@ const MainPage = () => {
 						onStatusChange={handleStatusChange}
 						projects={projects}
 						employees={employees}
+						meetings={meetengsData}
 						onTaskUpdate={() => {
 							refreshTasks();
 							refreshSelectedTask(selectedTask.id);
 						}}
+						employeeCalendar={calendarData}
 						loading={taskInfoLoading}
 					/>
 				) : selectedEmployee ? (
@@ -247,7 +271,7 @@ const MainPage = () => {
 						<div className="line-container">
 							<div className="line status-primary" />
 						</div>
-						<Calendar status='primary' />
+						<Calendar currentUserId={currentUserId} employeeCalendar={calendarData} meetings={meetengsData} />
 					</div>
 				)}
 			</div>

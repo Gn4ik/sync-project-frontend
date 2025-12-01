@@ -15,6 +15,7 @@ interface SideBarProps {
   userId: number;
   onTasksUpdate?: () => void;
   onProjectsUpdate?: () => void;
+  onMeetengsUpdate: () =>void;
   releasesData: ReleaseItem[];
   projectsData: ProjectItem[];
   employeesData: Employee[];
@@ -29,6 +30,7 @@ const SideBar = ({
   userId,
   onTasksUpdate,
   onProjectsUpdate,
+  onMeetengsUpdate,
   releasesData,
   projectsData,
   employeesData,
@@ -168,6 +170,7 @@ const SideBar = ({
         employees={employeesData}
         onProjectCreated={onProjectsUpdate}
         onTaskCreated={onTasksUpdate}
+        onMeetingCreated={onMeetengsUpdate}
         releases={releasesData}
       />
 

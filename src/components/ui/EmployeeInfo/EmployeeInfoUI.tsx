@@ -169,7 +169,9 @@ const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
                 </div>
               </div>
             </div>
-            <Calendar status='to-execution' />
+            <div className="calendar-wrapper">
+              <Calendar status='to-execution' />
+            </div>
           </div>
 
           <div className="schedule-section">

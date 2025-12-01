@@ -1,21 +1,34 @@
 import React, { useState } from 'react';
 import './Calendar.css';
-import { TaskStatus } from '@types';
+import { TaskItem, TaskStatus, CalendarItem, Meeting } from '@types';
 
 interface CalendarEvent {
   id: string;
   title: string;
-  time: string;
+  time?: string;
   date: Date;
+  type: 'deadline' | 'meeting';
+  link?: string;
 }
 
 interface CalendarProps {
   events?: CalendarEvent[];
   status?: TaskStatus;
+  task?: TaskItem;
+  employeeCalendar?: CalendarItem[];
+  meetings?: Meeting[];
+  currentUserId?: number;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) => {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 10, 1));
+const Calendar: React.FC<CalendarProps> = ({
+  events = [],
+  status = 'primary',
+  task,
+  employeeCalendar = [],
+  meetings = [],
+  currentUserId
+}) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const goToPreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -44,6 +57,50 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
 
   const getLastDayOfPreviousMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
+  };
+
+  const getEventsFromCalendarData = (): CalendarEvent[] => {
+    const events: CalendarEvent[] = [];
+
+    employeeCalendar.forEach(calendarDay => {
+      if (calendarDay) {
+        const dayDate = new Date(calendarDay.day);
+
+        calendarDay.timesheet?.forEach(([time, description, url], index) => {
+          if (description.includes('Собрание')) return;
+
+          events.push({
+            id: `timesheet-${calendarDay.day}-${index}`,
+            title: description,
+            time: time !== '00:00:00' ? time.substring(0, 5) : '',
+            date: dayDate,
+            type: 'deadline'
+          });
+        });
+      }
+    });
+
+    meetings.forEach(meeting => {
+      const meetingDate = new Date(meeting.date);
+
+      const isParticipant = meeting.employee_meetings?.some(
+        emp => emp.employee_id === currentUserId
+      );
+
+      if (isParticipant) {
+        const meetingTime = meeting.date.split('T')[1]?.substring(0, 5) || '00:00';
+
+        events.push({
+          id: `meeting-${meeting.id}`,
+          title: `Встреча: ${meeting.name}`,
+          time: meetingTime,
+          date: meetingDate,
+          type: 'meeting'
+        });
+      }
+    });
+
+    return events;
   };
 
   const year = currentDate.getFullYear();
@@ -94,33 +151,14 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
   const calendarDays = getAllCalendarDays();
   const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-  const defaultEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Встреча по проекту 1',
-      time: '18.00',
-      date: new Date(2025, 10, 17)
-    },
-    {
-      id: '2',
-      title: 'Релиз проекта',
-      time: '14.00',
-      date: new Date(2025, 10, 25)
-    },
-    {
-      id: '3',
-      title: 'Корпоратив',
-      time: '10.00',
-      date: new Date(2025, 11, 31)
-    }
-  ];
-
-  const calendarEvents = events.length > 0 ? events : defaultEvents;
+  const calendarEvents = events.length > 0 ? events : [];
 
   const getEventsForDay = (day: number, isCurrentMonth: boolean = true) => {
     if (!isCurrentMonth) return [];
 
-    return calendarEvents.filter(event => {
+    const allEvents = [...calendarEvents, ...getEventsFromCalendarData()];
+
+    return allEvents.filter(event => {
       const eventDate = new Date(event.date);
       return (
         eventDate.getDate() === day &&
@@ -141,29 +179,98 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
     );
   };
 
+  const getStatusClass = () => {
+    if (!task?.status?.alias) return '';
+
+    const statusAlias = task.status.alias;
+    let statusClass = '';
+
+    switch (statusAlias) {
+      case 'На проверке':
+        statusClass = 'on-review';
+        break;
+      case 'В работе':
+        statusClass = 'on-work';
+        break;
+      case 'Завершен':
+        statusClass = 'completed';
+        break;
+      case 'К выполнению':
+        statusClass = 'to-execution';
+        break;
+      case 'Отложен':
+        statusClass = 'stopped';
+        break;
+      case 'Отменен':
+        statusClass = 'closed';
+        break;
+      default:
+        statusClass = '';
+    }
+
+    return `${statusClass}`;
+  };
+
   const renderTooltip = (dayEvents: CalendarEvent[]) => {
     if (dayEvents.length === 0) return null;
 
+    const deadlines: CalendarEvent[] = [];
+    const meetings: CalendarEvent[] = [];
+
+    dayEvents.forEach(event => {
+      if (event.type === 'deadline') {
+        deadlines.push(event);
+      } else if (event.type === 'meeting') {
+        meetings.push(event);
+      }
+    });
+
     return (
       <div className="calendar-tooltip">
-        {dayEvents.map(event => (
-          <div key={event.id} className="tooltip-event">
-            <span className="tooltip-time">{event.time}</span>
-            <span className="tooltip-title">{event.title}</span>
+        {meetings.length > 0 && (
+          <div className="tooltip-section">
+            <span className="tooltip-section-header">Встречи</span>
+            {meetings.map((event, index) => (
+              <div key={event.id} className="tooltip-event">
+                <span className="tooltip-time">{event.time}</span>
+                <span className="tooltip-title">{event.title}</span>
+                {event.link && (
+                  <div className="tooltip-link">
+                    Ссылка: <a href={event.link} target="_blank" rel="noopener noreferrer">{event.link}</a>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {deadlines.length > 0 && (
+          <div className="tooltip-section">
+            <span className="tooltip-section-header">Дедлайны</span>
+            {deadlines.map((event, index) => (
+              <div key={event.id} className="tooltip-event">
+                <span className="tooltip-title">{event.title}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
-  const calendarClass = `calendar border-${status}`;
+  const calendarClass = `calendar border-${getStatusClass()}`;
   let calendarPosition;
-  
-  if (status != 'primary')
+
+  if (getStatusClass() !== 'primary' || status !== 'primary') {
     calendarPosition = `relative`;
+  }
+
+  const defaultCalendar = `calendar border-${status} ${status !== 'primary' ? 'relative' : ''}`;
 
   return (
-    <div className={calendarClass + ' ' + calendarPosition}>
+    <div className={getStatusClass()
+      ? `${calendarClass} ${calendarPosition || ''}`
+      : `${defaultCalendar}`}>
       <div className="calendar-header">
         <div className="calendar-navigation">
           <h3>{getMonthYearString()}</h3>
@@ -195,16 +302,33 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], status = 'primary' }) 
           const dayEvents = getEventsForDay(day, isCurrentMonth);
           const isOtherMonth = isPreviousMonth || isNextMonth;
 
+          const isDeadlineDay = task?.end_date && isCurrentMonth;
+          let isDeadline = false;
+
+          if (isDeadlineDay) {
+            try {
+              const taskDeadline = new Date(task.end_date);
+              isDeadline = (
+                taskDeadline.getDate() === day &&
+                taskDeadline.getMonth() === month &&
+                taskDeadline.getFullYear() === year
+              );
+            } catch (error) {
+              console.error('Ошибка парсинга даты дедлайна:', error);
+            }
+          }
+
           return (
             <div
               key={`${isCurrentMonth ? 'current' : 'other'}-${day}-${index}`}
-              className={`calendar-day 
+              className={`calendar-day  
                 ${isToday(day, isCurrentMonth) ? 'today' : ''} 
+                ${isDeadline ? `calendar-day-deadline ${getStatusClass()}` : ''}
                 ${dayEvents.length > 0 ? 'has-events' : ''}
                 ${isOtherMonth ? 'other-month' : ''}
               `}
             >
-              <span className="day-number">{day}</span>
+              <span className={isDeadline ? 'day-number-deadline' : 'day-number'}>{day}</span>
               {renderTooltip(dayEvents)}
             </div>
           );

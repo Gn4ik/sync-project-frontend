@@ -4,7 +4,7 @@ import '@styles/styles.css';
 import linkIcon from '@icons/LinkIcon.svg';
 import Calendar from '@components/Calendar/Calendar';
 import Popup from '@components/Popup/Popup';
-import { Employee, ProjectItem, Status, TaskItem, TaskStatus } from '@types';
+import { CalendarItem, Employee, Meeting, ProjectItem, Status, TaskItem, TaskStatus } from '@types';
 import { TaskModal } from '@components/TaskModal/TaskModal';
 
 interface TaskInfoUIProps {
@@ -24,6 +24,8 @@ interface TaskInfoUIProps {
   projects: ProjectItem[];
   employees: Employee[];
   userId: number;
+  employeeCalendar?: CalendarItem[];
+  meetings?: Meeting[];
   parseDate: (dateString: string) => string;
   onTextareaInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onStatusChange: (newStatusId: number) => void;
@@ -45,7 +47,6 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   userRole,
   userId,
   statuses,
-  taskStatus,
   lineClass,
   backgroundClass,
   isDropdownOpen,
@@ -57,6 +58,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   textareaRef,
   projects,
   employees,
+  employeeCalendar,
+  meetings,
   parseDate,
   onTextareaInput,
   onStatusChange,
@@ -209,7 +212,12 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                   </div>
                 </div>
               </div>
-              <Calendar status={taskStatus} />
+              <Calendar
+                currentUserId={userId}
+                task={selectedTask}
+                employeeCalendar={employeeCalendar}
+                meetings={meetings}
+              />
             </div>
 
             <div className='description-section'>

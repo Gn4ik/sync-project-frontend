@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Employee, getTaskStatusFromAlias, ProjectItem, Status, TaskItem } from '@types';
+import { CalendarItem, Employee, getTaskStatusFromAlias, Meeting, ProjectItem, Status, TaskItem } from '@types';
 import TaskInfoUI from '@ui/TaskInfo';
 import { tasksAPI } from '@utils/api';
 import Preloader from '@components/Preloader';
@@ -14,6 +14,8 @@ type TaskInfoProps = {
   employees: Employee[];
   onTaskUpdate?: () => void;
   loading?: boolean;
+  employeeCalendar?: CalendarItem[];
+  meetings?: Meeting[];
 }
 
 const useAutoResizeTextarea = () => {
@@ -43,6 +45,8 @@ const TaskInfo = ({
   projects,
   employees,
   loading = false,
+  employeeCalendar,
+  meetings,
   onTaskUpdate
 }: TaskInfoProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -239,6 +243,8 @@ const TaskInfo = ({
       textareaRef={textareaRef}
       projects={projects}
       employees={employees}
+      employeeCalendar={employeeCalendar}
+      meetings={meetings}
       parseDate={parseDate}
       onTextareaInput={handleTextareaInput}
       onStatusChange={handleStatusChange}

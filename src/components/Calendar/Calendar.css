@@ -129,6 +129,12 @@
   z-index: 10;
 }
 
+.calendar-day-deadline,
+.calendar-day-deadline:hover {
+  background: var(--status-color);
+}
+
+
 .calendar-day.other-month {
   color: #2D2D2D80 !important;
 }
@@ -175,6 +181,12 @@
   font-weight: 500;
   color: #2D2D2D;
   display: block;
+}
+
+.day-number-deadline {
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
 }
 
 .calendar-event {

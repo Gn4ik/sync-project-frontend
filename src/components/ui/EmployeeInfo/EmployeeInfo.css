@@ -268,3 +268,7 @@
 .admin-popup-item:hover svg path {
   fill: #2D2D2D;
 }
+
+.calendar-wrapper {
+  height: 295px;
+}
