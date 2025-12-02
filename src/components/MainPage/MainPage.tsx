@@ -214,6 +214,21 @@ const MainPage = () => {
 		}
 	};
 
+	const refreshEmployees = async () => {
+		try {
+			const newEmployees = await employeesAPI.getEmployees();
+			setEmployeesData(newEmployees);
+			if (selectedEmployee) {
+				const updatedEmployee = newEmployees.find((e: Employee) => e.id === selectedEmployee.id);
+				if (updatedEmployee) {
+					setSelectedEmployee(updatedEmployee);
+				}
+			}
+		} catch (error) {
+			console.error('Error refreshing employees:', error);
+		}
+	};
+
 	return (
 		<>
 			<AppHeader
@@ -259,6 +274,13 @@ const MainPage = () => {
 						userRole={currentUserRole}
 						selectedEmployee={selectedEmployee}
 						departments={departmentsData}
+						onEmployeeEdit={(updatedEmployee) => {
+							setSelectedEmployee(updatedEmployee);
+							setEmployeesData(prev => prev.map(emp =>
+								emp.id === updatedEmployee.id ? updatedEmployee : emp
+							));
+						}}
+						onEmployeeUpdate={refreshEmployees}
 					/>
 				) : showCalendarEvents ? (
 					<CalendarEvents

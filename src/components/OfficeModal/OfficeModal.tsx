@@ -43,8 +43,8 @@ export const OfficeModal = ({
     onSubmit(formData, 'department');
   };
 
-  const title = mode === 'edit' ? 'Редактировать офис' : 'Добавить офис';
-  const submitText = mode === 'edit' ? 'Сохранить' : 'Добавить офис';
+  const title = mode === 'edit' ? 'Редактировать отдел' : 'Добавить отдел';
+  const submitText = mode === 'edit' ? 'Сохранить' : 'Добавить отдел';
 
   return (
     <Modal
@@ -56,11 +56,11 @@ export const OfficeModal = ({
     >
       <div className="form-section">
         <div className="form-group">
-          <label className="form-label">Название офиса:</label>
+          <label className="form-label">Название отдела:</label>
           <input
             type="text"
             className="form-input form-text"
-            placeholder="Введите название офиса"
+            placeholder="Введите название отдела"
             value={formData.officeName}
             onChange={(e) => handleChange('officeName', e.target.value)}
             required

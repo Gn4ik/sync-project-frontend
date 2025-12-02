@@ -110,7 +110,7 @@ export const TaskModal = ({
         project_id: parseInt(formData.project) || 0,
         executor_id: parseInt(formData.assignee) || 0
       };
-      await onSubmit(taskData, 'task');
+      success= await onSubmit(taskData, 'task');
     } else if (mode === 'create') {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.title);

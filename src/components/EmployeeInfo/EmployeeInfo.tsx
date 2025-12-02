@@ -1,13 +1,14 @@
 import { useRef, useState, useEffect } from 'react';
 import { Department, Employee, Schedule } from '@types';
 import EmployeeInfoUI from '@ui/EmployeeInfo';
+import { departmentsAPI, employeesAPI, schedulesAPI } from '@utils/api';
 
 interface EmployeeInfoProps {
   selectedEmployee: Employee | null;
   userRole: 'executor' | 'manager' | 'admin' | null;
   onEmployeeEdit?: (employee: Employee) => void;
-  onEmployeeDelete?: (employeeId: string) => void;
   departments: Department[];
+  onEmployeeUpdate?: () => void;
 }
 
 interface ScheduleDay {
@@ -21,7 +22,7 @@ interface ScheduleDay {
   lunchEnd?: string;
 }
 
-const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDelete, departments }: EmployeeInfoProps) => {
+const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUpdate }: EmployeeInfoProps) => {
   const months = [
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
@@ -31,9 +32,31 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDe
 
   const [isAdminPopupOpen, setIsAdminPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно'>('Неизвестно');
   const adminButtonRef = useRef<HTMLButtonElement>(null);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [departments, setDepartmentsData] = useState<Department[]>([]);
+
+  useEffect(() => {
+    const loadDataForEmployeeModal = async () => {
+      try {
+        const [
+          departments,
+          schedules
+        ] = await Promise.allSettled([
+          departmentsAPI.getDepartments(),
+          schedulesAPI.getSchedules()
+        ]);
+
+        setDepartmentsData(departments.status === 'fulfilled' ? departments.value : []);
+        setSchedules(schedules.status === 'fulfilled' ? schedules.value : []);
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+    loadDataForEmployeeModal();
+  }, [])
 
   const formatTime = (timeString: string): string => {
     if (!timeString || timeString === '00:00:00') return '--:--';
@@ -166,9 +189,7 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDe
     const updateStatus = () => {
       setCurrentStatus(getCurrentStatus());
     };
-
     updateStatus();
-
     const interval = setInterval(updateStatus, 60000);
 
     return () => clearInterval(interval);
@@ -195,32 +216,34 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDe
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteEmployee = () => {
-    console.log('Удалить сотрудника:', selectedEmployee?.id);
-    setIsAdminPopupOpen(false);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleEditSubmit = (formData: any) => {
-    console.log('Данные для редактирования сотрудника:', formData);
-    setIsEditModalOpen(false);
-    onEmployeeEdit?.(formData);
-  };
-
-  const handleDeleteSubmit = () => {
-    console.log('Удаление сотрудника:', selectedEmployee?.id);
-    setIsDeleteModalOpen(false);
-    if (selectedEmployee) {
-      onEmployeeDelete?.(selectedEmployee.id);
+  const handleEditSubmit = async (formData: any): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        return false;
+      }
+      const response = await employeesAPI.updateEmployee(formData);
+      if (response.ok) {
+        if (selectedEmployee) {
+          const updatedEmployeeResponse = await employeesAPI.getEmployeeById(parseInt(selectedEmployee.id));
+          if (updatedEmployeeResponse.ok) {
+            const updatedEmployee = await updatedEmployeeResponse.json();
+            onEmployeeEdit?.(updatedEmployee);
+            onEmployeeUpdate?.();
+          }
+        }
+        setIsEditModalOpen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Ошибка сети:', error);
+      return false;
     }
   };
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setIsDeleteModalOpen(false);
   };
 
   const handleToggleAdminPopup = () => {
@@ -253,19 +276,16 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeDe
       currentDayIndex={currentDayIndex}
       isAdminPopupOpen={isAdminPopupOpen}
       isEditModalOpen={isEditModalOpen}
-      isDeleteModalOpen={isDeleteModalOpen}
       adminButtonRef={adminButtonRef}
       departments={departments}
+      schedules={schedules}
       parseDate={parseDate}
       getStatusClass={getStatusClass}
       onToggleAdminPopup={handleToggleAdminPopup}
       onCloseAdminPopup={handleCloseAdminPopup}
       onEditEmployee={handleEditEmployee}
-      onDeleteEmployee={handleDeleteEmployee}
       onEditSubmit={handleEditSubmit}
-      onDeleteSubmit={handleDeleteSubmit}
       onCloseEditModal={handleCloseEditModal}
-      onCloseDeleteModal={handleCloseDeleteModal}
       employeeDepartment={getEmployeeDepartment}
     />
   );

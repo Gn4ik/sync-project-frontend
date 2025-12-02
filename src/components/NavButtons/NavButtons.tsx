@@ -7,14 +7,14 @@ import employeeInactiveIcon from '@icons/colleague-inactive.svg';
 import plusIcon from '@icons/plus.svg';
 import filtersIcon from '@icons/filters.svg';
 import './NavButtons.css';
-import UserModal from "../UserModal/UserModal";
-import { Employee, ProjectItem, ReleaseItem } from "@components/types";
+import { Department, Employee, ProjectItem, ReleaseItem, Schedule } from "@components/types";
 import { TaskModal } from "@components/TaskModal/TaskModal";
 import { ProjectModal } from "@components/ProjectModal/ProjectModal";
 import { OfficeModal } from "@components/OfficeModal/OfficeModal";
 import { MeetingModal } from "@components/MeetingModal/MeetingModal";
 import { ReleaseModal } from "@components/ReleaseModal/ReleaseModal";
-import { departmentsAPI, employeesAPI, meetingsAPI, projectsAPI, releasesAPI, tasksAPI } from "@utils/api";
+import { departmentsAPI, employeesAPI, meetingsAPI, projectsAPI, releasesAPI, schedulesAPI, tasksAPI } from "@utils/api";
+import { EmployeeModal } from "@components/EmployeeModal/EmployeeModal";
 
 interface NavButtonsProps {
   activeList: 'tasks' | 'employees';
@@ -59,6 +59,8 @@ const NavButtons = ({
   const buttonAddRef = useRef<HTMLButtonElement>(null);
   const buttonFilterRef = useRef<HTMLButtonElement>(null);
   const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | 'meeting' | 'executor' | 'office' | null>(null);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [departments, setDepartmentsData] = useState<Department[]>([]);
 
   const handleReleaseClick = () => {
     setActiveModal('release');
@@ -94,7 +96,29 @@ const NavButtons = ({
     setActiveModal(null);
   };
 
+  useEffect(() => {
+    const loadDataForEmployeeModal = async () => {
+      try {
+        const [
+          departments,
+          schedules
+        ] = await Promise.allSettled([
+          departmentsAPI.getDepartments(),
+          schedulesAPI.getSchedules()
+        ]);
+
+        setDepartmentsData(departments.status === 'fulfilled' ? departments.value : []);
+        setSchedules(schedules.status === 'fulfilled' ? schedules.value : []);
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+    loadDataForEmployeeModal();
+  }, [])
+
   const handleModalSubmit = async (formData: any, type: string) => {
+    console.log(formData);
     try {
       let response: Response;
       switch (type) {
@@ -360,10 +384,13 @@ const NavButtons = ({
         employees={employees}
       />
 
-      <UserModal
+      <EmployeeModal
         isOpen={activeModal === 'executor'}
+        mode="create"
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
+        schedules={schedules}
+        departments={departments}
       />
 
       <OfficeModal

@@ -149,6 +149,7 @@ export type ReleaseItem = {
 
 export interface Employee {
   id: string;
+  role_id: number;
   fname: string;
   lname: string;
   mname: string;

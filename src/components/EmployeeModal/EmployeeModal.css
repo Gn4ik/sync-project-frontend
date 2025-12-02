@@ -1,0 +1,135 @@
+.form-group-fullwidth {
+  margin: 0 24px;
+}
+
+.form-group-fullwidth .form-input {
+  width: 100%;
+  font-size: 20px;
+  border: 1px solid #0B57D080;
+  border-radius: 10px;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.form-group-fullwidth .form-input:focus {
+  outline: none;
+  border-color: #0B57D0;
+  background-color: #CADAF3;
+  color: #2D2D2D;
+}
+
+.department-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.department-row input {
+  flex: 1;
+}
+
+.btn-remove {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-remove:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-add {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.btn-add:hover {
+  background: #45a049;
+}
+
+.departments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.btn-select-all {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.departments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.department-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.department-item:last-child {
+  margin-bottom: 0;
+}
+
+.department-checkbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.department-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.department-label {
+  cursor: pointer;
+  user-select: none;
+  flex-grow: 1;
+  font-weight: 500;
+}
+
+.department-office-input {
+  margin-left: 26px;
+}
+
+.office-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.form-hint {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.btn-primary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}

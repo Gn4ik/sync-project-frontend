@@ -105,7 +105,7 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeS
     } else {
       setFilteredDepartments(items);
     }
-  }, [searchQuery, items]);
+  }, [searchQuery, items, employees]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

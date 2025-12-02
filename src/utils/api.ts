@@ -134,6 +134,16 @@ export const projectsAPI = {
   },
 };
 
+export const schedulesAPI = {
+  getSchedules: async () => {
+    const response = await fetch(`${URL}/schedules/all/`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  }
+}
+
 export const employeesAPI = {
   getEmployees: async () => {
     const response = await fetch(`${URL}/employees/all/`, {
@@ -144,7 +154,7 @@ export const employeesAPI = {
   },
 
   getEmployeeCalendar: async (start: string, end: string) => {
-    const response = await fetch(`${URL}/employees/calendar/mine/range?start_date=${start}&end_date=${end}`, {
+    const response = await fetch(`${URL}/employees/calendar/mine/range/?start_date=${start}&end_date=${end}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
@@ -156,6 +166,23 @@ export const employeesAPI = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(employeeData)
+    });
+    return response;
+  },
+
+  updateEmployee: async (employeeData: any) => {
+    const response = await fetch(`${URL}/employees/update/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(employeeData)
+    });
+    return response;
+  },
+
+  getEmployeeById: async (employeeId: number) => {
+    const response = await fetch(`${URL}/employees/get_by_id/?id=${employeeId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
     });
     return response;
   },
