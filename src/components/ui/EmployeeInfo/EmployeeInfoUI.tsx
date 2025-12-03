@@ -19,7 +19,7 @@ interface ScheduleDay {
 
 interface EmployeeInfoUIProps {
   selectedEmployee: Employee | null;
-  userRole: 'executor' | 'manager' | 'admin' | null;
+  userRole: string | null;
   currentStatus: 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно';
   employeeSchedule: ScheduleDay[];
   currentDayIndex: number;
@@ -33,7 +33,7 @@ interface EmployeeInfoUIProps {
   onToggleAdminPopup: () => void;
   onCloseAdminPopup: () => void;
   onEditEmployee: () => void;
-  onEditSubmit: (formData: any) => Promise<boolean>;
+  onSubmit: (formData: any) => Promise<boolean>;
   onCloseEditModal: () => void;
   employeeDepartment: () => string;
 }
@@ -54,7 +54,7 @@ const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
   onToggleAdminPopup,
   onCloseAdminPopup,
   onEditEmployee,
-  onEditSubmit,
+  onSubmit,
   onCloseEditModal,
   employeeDepartment
 }) => {
@@ -196,7 +196,7 @@ const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
       <EmployeeModal
         isOpen={isEditModalOpen}
         onClose={onCloseEditModal}
-        onSubmit={onEditSubmit}
+        onSubmit={onSubmit}
         mode="edit"
         initialData={selectedEmployee}
         departments={departments}

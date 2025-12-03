@@ -23,8 +23,9 @@ interface NavButtonsProps {
   onTaskCreated?: () => void;
   onProjectCreated?: () => void;
   onMeetingCreated: () => void;
+  onEmployeeCreated: () => void;
   currentFilter: string;
-  userRole: 'executor' | 'manager' | 'admin' | null;
+  userRole: string | null;
   projects: ProjectItem[];
   employees: Employee[];
   releases: ReleaseItem[];
@@ -48,6 +49,7 @@ const NavButtons = ({
   onTaskCreated,
   onProjectCreated,
   onMeetingCreated,
+  onEmployeeCreated,
   currentFilter,
   projects,
   employees,
@@ -118,7 +120,6 @@ const NavButtons = ({
   }, [])
 
   const handleModalSubmit = async (formData: any, type: string) => {
-    console.log(formData);
     try {
       let response: Response;
       switch (type) {
@@ -147,8 +148,10 @@ const NavButtons = ({
       if (response.ok) {
         switch (type) {
           case 'task':
-            onTaskCreated?.();
-            break;
+            setTimeout(() => {
+              onTaskCreated?.();
+            }, 3000);
+            return true;
           case 'release':
             onTaskCreated?.();
             break;
@@ -161,9 +164,9 @@ const NavButtons = ({
           // case 'department':
           //   onDepartmentCreated?.();
           //   break;
-          // case 'employee':
-          //   onEmployeeCreated?.();
-          //   break;
+          case 'employee':
+            onEmployeeCreated?.();
+            break;
         }
         return true;
       } else {
@@ -397,6 +400,7 @@ const NavButtons = ({
         isOpen={activeModal === 'office'}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
+        employees={employees}
       />
     </>
   );

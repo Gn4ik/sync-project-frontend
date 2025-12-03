@@ -2,25 +2,29 @@ import { useEffect, useRef, useState } from 'react';
 import './SideBar.css';
 import NavButtons from '../NavButtons/NavButtons';
 import TasksList from '../TasksList/TasksList';
-import { Department, Employee, getAliasFromTaskStatus, ListNode, ProjectItem, ReleaseItem, TaskItem } from '@types';
+import { Department, Employee, getAliasFromTaskStatus, ListNode, ProjectItem, ReleaseItem, Status, TaskItem } from '@types';
 import EmployeesList from '../EmployeesList/EmployeesList';
-import InfoModal from '../InfoModal/InfoModal';
 import OfficesList from '../OfficesList/OfficesList';
 import Preloader from '@components/Preloader';
+import { ReleaseModal } from '@components/ReleaseModal/ReleaseModal';
+import { ProjectModal } from '@components/ProjectModal/ProjectModal';
+import { projectsAPI, releasesAPI } from '@utils/api';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
   onEmployeeSelect: (employee: Employee) => void;
-  userRole: 'executor' | 'manager' | 'admin' | null;
+  userRole: string | null;
   userId: number;
   onTasksUpdate?: () => void;
   onProjectsUpdate?: () => void;
-  onMeetengsUpdate: () =>void;
+  onMeetengsUpdate: () => void;
+  onEmployeesUpdate: () => void;
   releasesData: ReleaseItem[];
   projectsData: ProjectItem[];
   employeesData: Employee[];
   departmentsData: Department[];
   loading?: boolean;
+  statuses: Status[];
 }
 
 const SideBar = ({
@@ -31,11 +35,13 @@ const SideBar = ({
   onTasksUpdate,
   onProjectsUpdate,
   onMeetengsUpdate,
+  onEmployeesUpdate,
   releasesData,
   projectsData,
   employeesData,
   departmentsData,
-  loading = false
+  loading = false,
+  statuses
 }: SideBarProps) => {
   const [activeList, setActiveList] = useState<'tasks' | 'employees'>('tasks');
   const [taskFilter, setTaskFilter] = useState<string>('all');
@@ -45,6 +51,10 @@ const SideBar = ({
     type: null,
     data: null
   });
+
+  useEffect(() => {
+    if (userRole === 'executor') setTaskFilter('my');
+  }, [userRole])
 
   const handleListChange = (list: 'tasks' | 'employees') => {
     setActiveList(list);
@@ -121,6 +131,37 @@ const SideBar = ({
     return filterByStatus(data);
   };
 
+  const handleModalSubmit = async (formData: any, type: string): Promise<boolean> => {
+    console.log(formData)
+    try {
+      let response: Response;
+      switch (type) {
+        case 'release':
+          response = await releasesAPI.updateRelease(formData);
+          break;
+        case 'project':
+          response = await projectsAPI.updateProject(formData);
+          break;
+        default:
+          console.log('error');
+          return false;
+      }
+      if (response.ok) {
+        setTimeout(() => {
+          onTasksUpdate?.();
+        }, 3000)
+        return true;
+      } else {
+        console.error(`Ошибка при создании ${type}`);
+        console.log(response.json());
+        return false;
+      }
+    } catch (error) {
+      console.error('Ошибка сети:', error);
+      return false;
+    }
+  }
+
   const filteredTasks = getFilteredTasks(releasesData);
 
   const handleTaskClick = (task: TaskItem) => {
@@ -171,6 +212,7 @@ const SideBar = ({
         onProjectCreated={onProjectsUpdate}
         onTaskCreated={onTasksUpdate}
         onMeetingCreated={onMeetengsUpdate}
+        onEmployeeCreated={onEmployeesUpdate}
         releases={releasesData}
       />
 
@@ -195,11 +237,24 @@ const SideBar = ({
         />
       )}
 
-      <InfoModal
-        isOpen={infoModal.isOpen}
+      <ReleaseModal
+        isOpen={infoModal.type === 'release' ? infoModal.isOpen : false}
         onClose={handleInfoModalClose}
-        type={infoModal.type}
-        data={infoModal.data}
+        onSubmit={handleModalSubmit}
+        initialData={infoModal.data}
+        mode='edit'
+        statuses={statuses}
+      />
+
+      <ProjectModal
+        isOpen={infoModal.type === 'project' ? infoModal.isOpen : false}
+        onClose={handleInfoModalClose}
+        onSubmit={handleModalSubmit}
+        releases={releasesData}
+        statuses={statuses}
+        userRole={userRole}
+        initialData={infoModal.data}
+        mode='edit'
       />
     </div>
   );

@@ -197,6 +197,7 @@ export const EmployeeModal = ({
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    let success = false;
 
     const nameParts = formData.fullName.trim().split(/\s+/);
 
@@ -245,22 +246,20 @@ export const EmployeeModal = ({
 
     if (mode === 'edit' && initialData) {
       apiFormData.id = initialData.id;
+      success = await onSubmit(apiFormData, 'employee');
     } else if (mode === 'create') {
       apiFormData.password = formData.password;
+      success = await onSubmit(apiFormData, 'employee');
     }
-
-    const success = await onSubmit(apiFormData, 'employee');
 
     if (success) {
       setIsSuccess(true);
-      setIsSubmitting(false);
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
       }, 5000);
-    } else {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   const handleSuccessClose = () => {

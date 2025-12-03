@@ -96,7 +96,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
     }
   }, [selectedTask]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (commentText.trim() && selectedTask) {
       onCommentSubmit(selectedTask.id, commentText);
@@ -281,7 +281,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
                   </div>
                 ))}
               </div>
-              <form className="comment-form" onSubmit={handleSubmit}>
+              <form className="comment-form" onSubmit={handleCommentSubmit}>
                 <div className={`input-wrapper ${commentText ? 'has-text' : ''}`}>
                   <textarea
                     ref={textareaRef}

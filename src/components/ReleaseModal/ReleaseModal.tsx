@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '@components/Modal/Modal';
 import { SuccessModal } from '@components/SuccessModal/SuccessModal';
+import { Status } from '@components/types';
 
 interface ReleaseModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface ReleaseModalProps {
   onSubmit: (formData: any, type: string) => Promise<boolean>;
   mode?: 'create' | 'edit';
   initialData?: any;
+  statuses?: Status[];
 }
 
 export const ReleaseModal = ({
@@ -15,16 +17,23 @@ export const ReleaseModal = ({
   onClose,
   onSubmit,
   mode = 'create',
-  initialData
+  initialData,
+  statuses
 }: ReleaseModalProps) => {
   const [formData, setFormData] = useState({
     name: '',
     version: '',
     end_date: '',
     description: '',
+    status_id: '',
+    id: ''
   });
 
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const getReleaseId = (string: string) => {
+    return string.split('-')[1];
+  }
 
   useEffect(() => {
     if (isOpen && mode === 'edit' && initialData) {
@@ -41,17 +50,22 @@ export const ReleaseModal = ({
       };
 
       setFormData({
-        name: initialData.name || '',
-        version: initialData.version || '',
+        name: initialData.title || '',
+        version: initialData.data.version || '',
         end_date: formatDateForInput(initialData.end_date) || '',
-        description: initialData.description || '',
+        description: initialData.data.description || '',
+        status_id: initialData.data.status?.id?.toString() || '',
+        id: getReleaseId(initialData.id) || ''
       });
+
     } else if (isOpen) {
       setFormData({
         name: '',
         version: '',
         end_date: '',
         description: '',
+        status_id: '',
+        id: ''
       });
       setIsSuccess(false);
     }
@@ -62,10 +76,21 @@ export const ReleaseModal = ({
   };
 
   const handleSubmit = async () => {
-    const DataToSend = {
-      ...formData,
-      status_id: 0
-    };
+    let DataToSend;
+    if (mode === 'edit') {
+      DataToSend = {
+        name: formData.name,
+        version: formData.version,
+        description: formData.description,
+        id: formData.id,
+        status_id: formData.status_id ? parseInt(formData.status_id) : 0
+      };
+    } else {
+      DataToSend = {
+        ...formData,
+        status_id: 0
+      };
+    }
 
     const success = await onSubmit(DataToSend, 'release');
 
@@ -133,15 +158,36 @@ export const ReleaseModal = ({
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Срок:</label>
-          <input
-            type="date"
-            className="form-input form-text"
-            value={formData.end_date}
-            onChange={(e) => handleChange('end_date', e.target.value)}
-          />
-        </div>
+        {mode === 'edit' && (
+          <div className='form-group'>
+            <label className='form-label'>Статус:</label>
+            <select
+              className="form-select form-text"
+              value={formData.status_id}
+              onChange={(e) => handleChange('status_id', e.target.value)}
+              required
+            >
+              <option value="" disabled hidden>Выберите статус</option>
+              {statuses?.map(status => (
+                <option key={status.id} value={status.id} className='form-select-item'>
+                  {status.alias}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {mode === 'create' && (
+          <div className="form-group">
+            <label className="form-label">Срок:</label>
+            <input
+              type="date"
+              className="form-input form-text"
+              value={formData.end_date}
+              onChange={(e) => handleChange('end_date', e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="form-group-description">

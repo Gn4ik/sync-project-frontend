@@ -5,7 +5,7 @@ import { departmentsAPI, employeesAPI, schedulesAPI } from '@utils/api';
 
 interface EmployeeInfoProps {
   selectedEmployee: Employee | null;
-  userRole: 'executor' | 'manager' | 'admin' | null;
+  userRole: string | null;
   onEmployeeEdit?: (employee: Employee) => void;
   departments: Department[];
   onEmployeeUpdate?: () => void;
@@ -22,7 +22,7 @@ interface ScheduleDay {
   lunchEnd?: string;
 }
 
-const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUpdate }: EmployeeInfoProps) => {
+const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUpdate, departments }: EmployeeInfoProps) => {
   const months = [
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
     'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
@@ -35,28 +35,18 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
   const [currentStatus, setCurrentStatus] = useState<'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно'>('Неизвестно');
   const adminButtonRef = useRef<HTMLButtonElement>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [departments, setDepartmentsData] = useState<Department[]>([]);
 
   useEffect(() => {
-    const loadDataForEmployeeModal = async () => {
+    const loadSchedules = async () => {
       try {
-        const [
-          departments,
-          schedules
-        ] = await Promise.allSettled([
-          departmentsAPI.getDepartments(),
-          schedulesAPI.getSchedules()
-        ]);
-
-        setDepartmentsData(departments.status === 'fulfilled' ? departments.value : []);
-        setSchedules(schedules.status === 'fulfilled' ? schedules.value : []);
-
+        const schedules = await schedulesAPI.getSchedules();
+        setSchedules(schedules);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading schedules:', error);
       }
-    }
-    loadDataForEmployeeModal();
-  }, [])
+    };
+    loadSchedules();
+  }, []);
 
   const formatTime = (timeString: string): string => {
     if (!timeString || timeString === '00:00:00') return '--:--';
@@ -216,26 +206,26 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = async (formData: any): Promise<boolean> => {
+  const handleSubmit = async (formData: any) => {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {
         return false;
       }
+
       const response = await employeesAPI.updateEmployee(formData);
       if (response.ok) {
+        onEmployeeUpdate?.();
+
         if (selectedEmployee) {
           const updatedEmployeeResponse = await employeesAPI.getEmployeeById(parseInt(selectedEmployee.id));
           if (updatedEmployeeResponse.ok) {
             const updatedEmployee = await updatedEmployeeResponse.json();
             onEmployeeEdit?.(updatedEmployee);
-            onEmployeeUpdate?.();
           }
         }
-        setIsEditModalOpen(false);
-        return true;
       }
-      return false;
+      return response.ok;
     } catch (error) {
       console.error('Ошибка сети:', error);
       return false;
@@ -284,7 +274,7 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
       onToggleAdminPopup={handleToggleAdminPopup}
       onCloseAdminPopup={handleCloseAdminPopup}
       onEditEmployee={handleEditEmployee}
-      onEditSubmit={handleEditSubmit}
+      onSubmit={handleSubmit}
       onCloseEditModal={handleCloseEditModal}
       employeeDepartment={getEmployeeDepartment}
     />

@@ -88,11 +88,10 @@ export const tasksAPI = {
     return response;
   },
 
-  deleteTask: async (taskData: number) => {
-    const response = await fetch(`${URL}/tasks/delete/`, {
-      method: 'PUT',
+  deleteTask: async (taskId: number) => {
+    const response = await fetch(`${URL}/tasks/delete/?id=${taskId}`, {
+      method: 'DELETE',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ id: taskData }),
     });
     return response;
   },
@@ -129,6 +128,15 @@ export const projectsAPI = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(projectData),
+    });
+    return response;
+  },
+
+  updateProject: async (projectData: any) => {
+    const response = await fetch(`${URL}/projects/update/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(projectData)
     });
     return response;
   },
@@ -234,7 +242,16 @@ export const releasesAPI = {
       body: JSON.stringify(releaseData)
     });
     return response;
-  }
+  },
+
+  updateRelease: async (releaseData: any) => {
+    const response = await fetch(`${URL}/releases/update/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(releaseData)
+    });
+    return response;
+  },
 };
 
 export const departmentsAPI = {

@@ -22,7 +22,11 @@ const TasksList = ({ items, onItemClick, onInfoClick }: TasksListProps) => {
         type: 'project',
         data: project,
 
-        children: project.tasks?.map(task => ({
+        children: project.tasks?.sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return dateA - dateB;
+        })?.map(task => ({
           id: `task-${task.id}`,
           title: task.name,
           type: 'task',

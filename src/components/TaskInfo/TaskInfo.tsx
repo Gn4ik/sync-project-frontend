@@ -12,7 +12,7 @@ type TaskInfoProps = {
   onStatusChange?: (taskId: number, newStatusId: number) => void;
   projects: ProjectItem[];
   employees: Employee[];
-  onTaskUpdate?: () => void;
+  onTaskUpdate?: (mode: string) => void;
   loading?: boolean;
   employeeCalendar?: CalendarItem[];
   meetings?: Meeting[];
@@ -144,7 +144,7 @@ const TaskInfo = ({
       }
       const response = await tasksAPI.updateTask(formData);
       if (response.ok) {
-        onTaskUpdate?.();
+        onTaskUpdate?.('edit');
         setIsEditModalOpen(false);
 
         if (selectedTask) {
@@ -171,7 +171,7 @@ const TaskInfo = ({
       const response = await tasksAPI.deleteTask(taskId);
       if (response.ok) {
         setIsDeleteModalOpen(false);
-        onTaskUpdate?.();
+        onTaskUpdate?.('delete');
       }
     }
     catch (error) {
@@ -187,7 +187,7 @@ const TaskInfo = ({
       }
       const response = await tasksAPI.commentTask(taskId, text);
       if (response.ok) {
-        onTaskUpdate?.();
+        onTaskUpdate?.('comment');
       }
     }
     catch (error) {

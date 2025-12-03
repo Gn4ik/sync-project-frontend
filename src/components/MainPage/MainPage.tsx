@@ -15,7 +15,7 @@ const MainPage = () => {
 	const [showCalendarEvents, setShowCalendarEvents] = useState(false);
 	const [statusesData, setStatusesData] = useState<Status[]>([]);
 
-	const [currentUserRole, setCurrentUserRole] = useState<'executor' | 'manager' | 'admin' | null>(null);
+	const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 	const [currentUserId, setCurrentUserId] = useState<number>(0);
 	const [taskInfoLoading, setTaskInfoLoading] = useState(false);
 
@@ -26,6 +26,7 @@ const MainPage = () => {
 	const [employees, setEmployeesData] = useState<Employee[]>([]);
 	const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [updating, setUpdating] = useState(false);
 
 	const updateTaskInList = (taskId: number, updates: Partial<TaskItem>) => {
 		setReleasesData(prevReleases => {
@@ -51,7 +52,7 @@ const MainPage = () => {
 
 			const data = await response.json();
 
-			const role = data.role?.description;
+			const role = data.role.description;
 			const id = data.id;
 			if (role === 'executor' || role === 'manager' || role === 'admin') {
 				setCurrentUserRole(role);
@@ -62,7 +63,6 @@ const MainPage = () => {
 			}
 		} catch (error) {
 			console.error('Token check failed:', error);
-		} finally {
 		}
 	};
 
@@ -136,6 +136,17 @@ const MainPage = () => {
 		setSelectedEmployee(null);
 	};
 
+	const handleTaskUpdate = (selectedTask: TaskItem, mode: string) => {
+		if (mode !== 'comment') {
+			refreshTasks();
+		}
+		if (mode === 'edit' || mode === 'comment') {
+			refreshSelectedTask(selectedTask.id);
+		} else {
+			setSelectedTask(null);
+		}
+	}
+
 	const handleStatusChange = async (taskId: number, newStatusId: number) => {
 		try {
 			const token = localStorage.getItem('auth_token');
@@ -173,10 +184,13 @@ const MainPage = () => {
 
 	const refreshTasks = async () => {
 		try {
+			setUpdating(true);
 			const newReleases = await releasesAPI.getReleases();
 			setReleasesData(newReleases);
 		} catch (error) {
 			console.error('Error refreshing tasks:', error);
+		} finally {
+			setUpdating(false);
 		}
 	};
 
@@ -214,10 +228,13 @@ const MainPage = () => {
 		}
 	};
 
-	const refreshEmployees = async () => {
+	const refreshEmployeesAndDepartments = async () => {
+		console.log('refresh employees')
 		try {
 			const newEmployees = await employeesAPI.getEmployees();
+			const newDepartments = await departmentsAPI.getDepartments();
 			setEmployeesData(newEmployees);
+			setDepartmentsData(newDepartments);
 			if (selectedEmployee) {
 				const updatedEmployee = newEmployees.find((e: Employee) => e.id === selectedEmployee.id);
 				if (updatedEmployee) {
@@ -245,11 +262,13 @@ const MainPage = () => {
 					onTasksUpdate={refreshTasks}
 					onProjectsUpdate={refreshProjects}
 					onMeetengsUpdate={refreshMeetings}
+					onEmployeesUpdate={refreshEmployeesAndDepartments}
 					releasesData={releasesData}
 					departmentsData={departmentsData}
 					projectsData={projects}
 					employeesData={employees}
-					loading={loading}
+					loading={loading || updating}
+					statuses={statusesData}
 				/>
 
 				{selectedTask ? (
@@ -262,10 +281,7 @@ const MainPage = () => {
 						projects={projects}
 						employees={employees}
 						meetings={meetengsData}
-						onTaskUpdate={() => {
-							refreshTasks();
-							refreshSelectedTask(selectedTask.id);
-						}}
+						onTaskUpdate={(mode: string) => handleTaskUpdate(selectedTask, mode)}
 						employeeCalendar={calendarData}
 						loading={taskInfoLoading}
 					/>
@@ -280,7 +296,7 @@ const MainPage = () => {
 								emp.id === updatedEmployee.id ? updatedEmployee : emp
 							));
 						}}
-						onEmployeeUpdate={refreshEmployees}
+						onEmployeeUpdate={refreshEmployeesAndDepartments}
 					/>
 				) : showCalendarEvents ? (
 					<CalendarEvents

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { authAPI } from '@utils/api';
 
 interface AppHeaderProps {
-  userRole?: 'executor' | 'manager' | 'admin' | null;
+  userRole?: string | null;
   onCalendarClick?: () => void;
   isCalendarActive?: boolean;
 }

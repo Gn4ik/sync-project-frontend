@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '@components/Modal/Modal';
+import { Employee } from '@components/types';
 
 interface OfficeModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface OfficeModalProps {
   onSubmit: (formData: any, type: string) => void;
   mode?: 'create' | 'edit';
   initialData?: any;
+  employees: Employee[];
 }
 
 export const OfficeModal = ({
@@ -14,23 +16,24 @@ export const OfficeModal = ({
   onClose,
   onSubmit,
   mode = 'create',
-  initialData
+  initialData,
+  employees
 }: OfficeModalProps) => {
   const [formData, setFormData] = useState({
-    officeName: '',
-    manager: '',
+    name: '',
+    lead_id: '',
   });
 
   useEffect(() => {
     if (isOpen && mode === 'edit' && initialData) {
       setFormData({
-        officeName: initialData.officeName || initialData.name || '',
-        manager: initialData.manager || '',
+        name: initialData.name || '',
+        lead_id: initialData.manager || '',
       });
     } else if (isOpen) {
       setFormData({
-        officeName: '',
-        manager: '',
+        name: '',
+        lead_id: '',
       });
     }
   }, [isOpen, initialData, mode]);
@@ -61,22 +64,27 @@ export const OfficeModal = ({
             type="text"
             className="form-input form-text"
             placeholder="Введите название отдела"
-            value={formData.officeName}
-            onChange={(e) => handleChange('officeName', e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
             required
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">ФИО руководителя:</label>
-          <input
-            type="text"
-            className="form-input form-text"
-            placeholder="Введите ФИО руководителя"
-            value={formData.manager}
-            onChange={(e) => handleChange('manager', e.target.value)}
+          <label className="form-label">Руководитель:</label>
+          <select
+            className="form-select form-text"
+            value={formData.lead_id}
+            onChange={(e) => handleChange('lead_id', e.target.value)}
             required
-          />
+          >
+            <option value="" disabled hidden className='form-text'>Выберите руководителя</option>
+            {employees.map(employee => (
+              <option key={employee.id} value={employee.id} className='form-select-item'>
+                {employee.lname} {employee.fname} {employee.mname}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </Modal>

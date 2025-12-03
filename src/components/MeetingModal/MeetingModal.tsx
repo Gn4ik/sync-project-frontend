@@ -192,6 +192,7 @@ export const MeetingModal = ({
               value={getInputDisplayValue()}
               onChange={handleInputChange}
               onFocus={() => setShowDropdown(true)}
+              required
             />
             {showDropdown && (
               <div ref={dropdownRef} className="participants-dropdown">
@@ -248,6 +249,7 @@ export const MeetingModal = ({
             placeholder="Введите ссылку на встречу"
             value={formData.link}
             onChange={(e) => handleChange('link', e.target.value)}
+            required
           />
         </div>
       </div>
@@ -260,6 +262,7 @@ export const MeetingModal = ({
           rows={3}
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
+          required
         />
       </div>
     </Modal>
