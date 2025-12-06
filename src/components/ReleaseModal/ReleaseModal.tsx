@@ -10,6 +10,7 @@ interface ReleaseModalProps {
   mode?: 'create' | 'edit';
   initialData?: any;
   statuses?: Status[];
+  userRole?: string | null;
 }
 
 export const ReleaseModal = ({
@@ -18,7 +19,8 @@ export const ReleaseModal = ({
   onSubmit,
   mode = 'create',
   initialData,
-  statuses
+  statuses,
+  userRole
 }: ReleaseModalProps) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -30,12 +32,16 @@ export const ReleaseModal = ({
   });
 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const getReleaseId = (string: string) => {
     return string.split('-')[1];
   }
 
   useEffect(() => {
+    const canEdit = userRole === 'admin' || userRole === 'manager';
+    setIsViewMode(!canEdit && mode === 'edit');
+
     if (isOpen && mode === 'edit' && initialData) {
       const formatDateForInput = (dateString: string) => {
         if (!dateString) return '';
@@ -113,7 +119,7 @@ export const ReleaseModal = ({
     return 'Релиз успешно создан!';
   };
 
-  const name = mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз';
+  const name = isViewMode ? 'Информация о релизе' : mode === 'edit' ? 'Редактировать релиз' : 'Создать релиз';
 
   if (isSuccess) {
     return (
@@ -132,6 +138,7 @@ export const ReleaseModal = ({
       onSubmit={handleSubmit}
       title={name}
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
+      isReadOnly={isViewMode}
     >
       <div className="form-section">
         <div className="form-group">
@@ -143,6 +150,7 @@ export const ReleaseModal = ({
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             required
+            readOnly={isViewMode}
           />
         </div>
 
@@ -155,6 +163,7 @@ export const ReleaseModal = ({
             value={formData.version}
             onChange={(e) => handleChange('version', e.target.value)}
             required
+            disabled={isViewMode}
           />
         </div>
 
@@ -166,6 +175,7 @@ export const ReleaseModal = ({
               value={formData.status_id}
               onChange={(e) => handleChange('status_id', e.target.value)}
               required
+              disabled={isViewMode}
             >
               <option value="" disabled hidden>Выберите статус</option>
               {statuses?.map(status => (
@@ -185,6 +195,7 @@ export const ReleaseModal = ({
               className="form-input form-text"
               value={formData.end_date}
               onChange={(e) => handleChange('end_date', e.target.value)}
+              disabled={isViewMode}
             />
           </div>
         )}
@@ -198,6 +209,7 @@ export const ReleaseModal = ({
           rows={3}
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
+          readOnly={isViewMode}
         />
       </div>
     </Modal>

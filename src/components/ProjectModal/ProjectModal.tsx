@@ -107,7 +107,7 @@ export const ProjectModal = ({
     return 'Проект успешно создан!';
   };
 
-  const name = mode === 'edit' ? 'Редактировать проект' : 'Создать проект';
+  const name =  isViewMode ? 'Информация о проекте' : mode === 'edit' ? 'Редактировать проект' : 'Создать проект';
 
   if (isSuccess) {
     return (
@@ -126,6 +126,7 @@ export const ProjectModal = ({
       onSubmit={handleSubmit}
       title={name}
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
+      isReadOnly={isViewMode}
     >
       <div className="form-section">
         <div className="form-group">

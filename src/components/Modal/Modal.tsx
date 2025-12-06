@@ -17,6 +17,7 @@ interface ModalProps {
     variant: 'primary' | 'danger' | 'secondary';
     onClick: () => void;
   };
+  isReadOnly?: boolean;
 }
 
 export const Modal = ({
@@ -29,7 +30,8 @@ export const Modal = ({
   submitButtonVariant = 'primary',
   showCancelButton = true,
   cancelButtonText = 'Отменить',
-  additionalButton
+  additionalButton,
+  isReadOnly
 }: ModalProps) => {
   const handleOverlayClick = (e: React.PointerEvent) => {
     if (e.target === e.currentTarget) {
@@ -70,34 +72,36 @@ export const Modal = ({
           </div>
 
           <div className="modal-actions">
-            <div className="action-buttons">
-              {showCancelButton && (
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={onClose}
-                >
-                  {cancelButtonText}
-                </button>
-              )}
+            {!isReadOnly && (
+              <div className="action-buttons">
+                {showCancelButton && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={onClose}
+                  >
+                    {cancelButtonText}
+                  </button>
+                )}
 
-              {additionalButton && (
-                <button
-                  type="button"
-                  className={getButtonClass(additionalButton.variant)}
-                  onClick={additionalButton.onClick}
-                >
-                  {additionalButton.text}
-                </button>
-              )}
+                {additionalButton && (
+                  <button
+                    type="button"
+                    className={getButtonClass(additionalButton.variant)}
+                    onClick={additionalButton.onClick}
+                  >
+                    {additionalButton.text}
+                  </button>
+                )}
 
-              <button
-                type="submit"
-                className={getButtonClass(submitButtonVariant)}
-              >
-                {submitButtonText}
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  className={getButtonClass(submitButtonVariant)}
+                >
+                  {submitButtonText}
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>

@@ -132,7 +132,6 @@ const SideBar = ({
   };
 
   const handleModalSubmit = async (formData: any, type: string): Promise<boolean> => {
-    console.log(formData)
     try {
       let response: Response;
       switch (type) {
@@ -244,6 +243,7 @@ const SideBar = ({
         initialData={infoModal.data}
         mode='edit'
         statuses={statuses}
+        userRole={userRole}
       />
 
       <ProjectModal
