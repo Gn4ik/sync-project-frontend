@@ -3,14 +3,16 @@ import { Department, Employee } from '@types';
 import EmployeesList from '../EmployeesList/EmployeesList';
 import './OfficesList.css';
 import searchIcon from '@icons/SearchIcon.svg';
+import { OfficeModal } from '@components/OfficeModal/OfficeModal';
 
 interface OfficesListProps {
   items: Department[];
   employees: Employee[];
   onEmployeeSelect?: (employee: Employee) => void;
+  onDepartmentUpdate: (formadata: any, type: string) => Promise<boolean>;
 }
 
-const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeSelect }) => {
+const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeSelect, onDepartmentUpdate }) => {
   const [expandedOffices, setExpandedOffices] = useState<Set<string>>(new Set());
   const [hoveredOffice, setHoveredOffice] = useState<string | null>(null);
   const [activeEmployeeId, setActiveEmployeeId] = useState<string | null>(null);
@@ -25,6 +27,33 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeS
         newSet.add(officeId);
       }
       return newSet;
+    });
+  };
+
+  const [departmentModal, setDepartmentModal] = useState<{
+    isOpen: boolean;
+    department: Department | null;
+    mode: 'create' | 'edit';
+  }>({
+    isOpen: false,
+    department: null,
+    mode: 'edit'
+  });
+
+  const handleInfoClick = (e: React.MouseEvent, department: Department) => {
+    e.stopPropagation();
+    setDepartmentModal({
+      isOpen: true,
+      department,
+      mode: 'edit'
+    });
+  };
+
+  const handleModalClose = () => {
+    setDepartmentModal({
+      isOpen: false,
+      department: null,
+      mode: 'edit'
     });
   };
 
@@ -161,6 +190,7 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeS
                             className="info-button"
                             onMouseEnter={() => handleInfoMouseEnter(department.id.toString())}
                             onMouseLeave={handleInfoMouseLeave}
+                            onClick={(e) => handleInfoClick(e, department)}
                           >
                             ℹ
                           </button>
@@ -197,6 +227,15 @@ const OfficesList: React.FC<OfficesListProps> = ({ items, employees, onEmployeeS
           Ничего не найдено
         </div>
       )}
+
+      <OfficeModal
+        isOpen={departmentModal.isOpen}
+        onClose={handleModalClose}
+        initialData={departmentModal.department}
+        onSubmit={onDepartmentUpdate}
+        mode='edit'
+        employees={employees}
+      />
     </div>
   );
 };

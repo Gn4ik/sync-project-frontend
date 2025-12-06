@@ -24,11 +24,13 @@ interface NavButtonsProps {
   onProjectCreated?: () => void;
   onMeetingCreated: () => void;
   onEmployeeCreated: () => void;
+  onDepartmentCreated: () => void;
   currentFilter: string;
   userRole: string | null;
   projects: ProjectItem[];
   employees: Employee[];
   releases: ReleaseItem[];
+  departments: Department[];
 }
 
 const managerStatusFilters = [
@@ -50,10 +52,12 @@ const NavButtons = ({
   onProjectCreated,
   onMeetingCreated,
   onEmployeeCreated,
+  onDepartmentCreated,
   currentFilter,
   projects,
   employees,
-  releases
+  releases,
+  departments
 }: NavButtonsProps) => {
   const [popupAddOpen, setIsPopupAddOpen] = useState(false);
   const [popupFiltersOpen, setIsPopupFiltersOpen] = useState(false);
@@ -62,7 +66,6 @@ const NavButtons = ({
   const buttonFilterRef = useRef<HTMLButtonElement>(null);
   const [activeModal, setActiveModal] = useState<'release' | 'project' | 'task' | 'meeting' | 'executor' | 'office' | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [departments, setDepartmentsData] = useState<Department[]>([]);
 
   const handleReleaseClick = () => {
     setActiveModal('release');
@@ -102,14 +105,11 @@ const NavButtons = ({
     const loadDataForEmployeeModal = async () => {
       try {
         const [
-          departments,
           schedules
         ] = await Promise.allSettled([
-          departmentsAPI.getDepartments(),
           schedulesAPI.getSchedules()
         ]);
 
-        setDepartmentsData(departments.status === 'fulfilled' ? departments.value : []);
         setSchedules(schedules.status === 'fulfilled' ? schedules.value : []);
 
       } catch (error) {
@@ -161,9 +161,9 @@ const NavButtons = ({
           case 'project':
             onProjectCreated?.();
             break;
-          // case 'department':
-          //   onDepartmentCreated?.();
-          //   break;
+          case 'department':
+            onDepartmentCreated?.();
+            break;
           case 'employee':
             onEmployeeCreated?.();
             break;

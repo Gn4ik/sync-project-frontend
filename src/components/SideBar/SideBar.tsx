@@ -8,7 +8,7 @@ import OfficesList from '../OfficesList/OfficesList';
 import Preloader from '@components/Preloader';
 import { ReleaseModal } from '@components/ReleaseModal/ReleaseModal';
 import { ProjectModal } from '@components/ProjectModal/ProjectModal';
-import { projectsAPI, releasesAPI } from '@utils/api';
+import { departmentsAPI, projectsAPI, releasesAPI } from '@utils/api';
 
 interface SideBarProps {
   onTaskSelect: (task: TaskItem) => void;
@@ -19,6 +19,7 @@ interface SideBarProps {
   onProjectsUpdate?: () => void;
   onMeetengsUpdate: () => void;
   onEmployeesUpdate: () => void;
+  onDepartmentsUpdate: () => void;
   releasesData: ReleaseItem[];
   projectsData: ProjectItem[];
   employeesData: Employee[];
@@ -36,6 +37,7 @@ const SideBar = ({
   onProjectsUpdate,
   onMeetengsUpdate,
   onEmployeesUpdate,
+  onDepartmentsUpdate,
   releasesData,
   projectsData,
   employeesData,
@@ -141,13 +143,17 @@ const SideBar = ({
         case 'project':
           response = await projectsAPI.updateProject(formData);
           break;
+        case 'department':
+          response = await departmentsAPI.updateDepartment(formData);
+          break;
         default:
           console.log('error');
           return false;
       }
       if (response.ok) {
         setTimeout(() => {
-          onTasksUpdate?.();
+          if (type === 'department') { onDepartmentsUpdate?.(); }
+          else { onTasksUpdate?.(); }
         }, 3000)
         return true;
       } else {
@@ -208,10 +214,12 @@ const SideBar = ({
         userRole={userRole}
         projects={projectsData}
         employees={employeesData}
+        departments={departmentsData}
         onProjectCreated={onProjectsUpdate}
         onTaskCreated={onTasksUpdate}
         onMeetingCreated={onMeetengsUpdate}
         onEmployeeCreated={onEmployeesUpdate}
+        onDepartmentCreated={onDepartmentsUpdate}
         releases={releasesData}
       />
 
@@ -220,6 +228,7 @@ const SideBar = ({
           items={departmentsData}
           employees={employeesData}
           onEmployeeSelect={handleEmployeeClick}
+          onDepartmentUpdate={handleModalSubmit}
         />
       ) : activeList === 'tasks' ? (
         <TasksList

@@ -229,7 +229,6 @@ const MainPage = () => {
 	};
 
 	const refreshEmployeesAndDepartments = async () => {
-		console.log('refresh employees')
 		try {
 			const newEmployees = await employeesAPI.getEmployees();
 			const newDepartments = await departmentsAPI.getDepartments();
@@ -263,6 +262,7 @@ const MainPage = () => {
 					onProjectsUpdate={refreshProjects}
 					onMeetengsUpdate={refreshMeetings}
 					onEmployeesUpdate={refreshEmployeesAndDepartments}
+					onDepartmentsUpdate={refreshEmployeesAndDepartments}
 					releasesData={releasesData}
 					departmentsData={departmentsData}
 					projectsData={projects}

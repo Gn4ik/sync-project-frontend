@@ -271,4 +271,13 @@ export const departmentsAPI = {
     });
     return response;
   },
+
+  updateDepartment: async (departmentData: any) => {
+    const response = await fetch(`${URL}/departments/update/`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(departmentData)
+    });
+    return response;
+  },
 };
