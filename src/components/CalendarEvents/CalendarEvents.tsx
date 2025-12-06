@@ -1,5 +1,5 @@
 import './CalendarEvents.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CalendarItem, Meeting, TaskItem } from '@types';
 
 interface CalendarEvent {
@@ -10,12 +10,14 @@ interface CalendarEvent {
   type: 'deadline' | 'meeting';
   task?: TaskItem;
   link?: string;
+  meetingId?: number;
 }
 
 interface CalendarEventsProps {
   currentUser: number;
   employeeCalendar: CalendarItem[];
   meetings: Meeting[];
+  highlightedMeetingId?: number | null;
 }
 
 interface GroupedEvents {
@@ -27,8 +29,9 @@ const monthsGenitive = [
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
 ];
 
-const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEventsProps) => {
+const CalendarEvents = ({ currentUser, employeeCalendar, meetings, highlightedMeetingId }: CalendarEventsProps) => {
   const [groupedEvents, setGroupedEvents] = useState<GroupedEvents>({});
+  const highlightedMeetingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const createEventsFromCalendarData = (): CalendarEvent[] => {
@@ -111,7 +114,8 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
               date: meetingDay,
               time: meetingTime,
               type: 'meeting',
-              link: meeting.link
+              link: meeting.link,
+              meetingId: meeting.id
             });
           }
         }
@@ -132,7 +136,16 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
     const events = createEventsFromCalendarData();
     const grouped = groupEventsByDate(events);
     setGroupedEvents(grouped);
-  }, [employeeCalendar, meetings, currentUser]);
+
+    if (highlightedMeetingId && highlightedMeetingRef.current) {
+      setTimeout(() => {
+        highlightedMeetingRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 300);
+    }
+  }, [employeeCalendar, meetings, currentUser, highlightedMeetingId]);
 
   const groupEventsByDate = (events: CalendarEvent[]): GroupedEvents => {
     const grouped: GroupedEvents = {};
@@ -179,27 +192,34 @@ const CalendarEvents = ({ currentUser, employeeCalendar, meetings }: CalendarEve
               <div className="blue-line"></div>
 
               <div className="events-for-date">
-                {groupedEvents[date].map(event => (
-                  <div key={event.id} className="event-row">
+                {groupedEvents[date].map(event => {
+                  const isHighlighted = event.meetingId === highlightedMeetingId;
+                  return (
                     <div
-                      className={`event-time ${!event.time ? 'no-time' : ''}`}
+                      key={event.id}
+                      ref={isHighlighted ? highlightedMeetingRef : null}
+                      className={`event-row ${isHighlighted ? 'event-highlighted' : ''}`}
                     >
-                      {event.time || ''}
+                      <div
+                        className={`event-time ${!event.time ? 'no-time' : ''}`}
+                      >
+                        {event.time || ''}
+                      </div>
+                      <div
+                        className={`event-title-inline ${event.type === 'deadline' ? 'deadline' : 'meeting'}`}
+                      >
+                        {event.title}
+                      </div>
+                      {event.link && (
+                        <div className='event-title-inline meeting'>
+                          {', '}{'Ссылка: '}
+                          <a href={event.link} className='meeting-link'>
+                            {event.link}
+                          </a>
+                        </div>)}
                     </div>
-                    <div
-                      className={`event-title-inline ${event.type === 'deadline' ? 'deadline' : 'meeting'}`}
-                    >
-                      {event.title}
-                    </div>
-                    {event.link && (
-                      <div className='event-title-inline meeting'>
-                        {', '}{'Ссылка: '}
-                        <a href={event.link} className='meeting-link'>
-                          {event.link}
-                        </a>
-                      </div>)}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

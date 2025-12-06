@@ -20,7 +20,7 @@ interface NavButtonsProps {
   activeList: 'tasks' | 'employees';
   onListChange: (list: 'tasks' | 'employees') => void;
   onFilterChange: (filter: string) => void;
-  onTaskCreated?: () => void;
+  onTaskCreated?: (setUpdate: boolean) => void;
   onProjectCreated?: () => void;
   onMeetingCreated: () => void;
   onEmployeeCreated: () => void;
@@ -149,17 +149,23 @@ const NavButtons = ({
         switch (type) {
           case 'task':
             setTimeout(() => {
-              onTaskCreated?.();
+              onTaskCreated?.(true);
             }, 3000);
-            return true;
+            break;
           case 'release':
-            onTaskCreated?.();
+            setTimeout(() => {
+              onTaskCreated?.(true);
+            }, 3000);
             break;
           case 'meeting':
-            onMeetingCreated?.();
+            setTimeout(() => {
+              onMeetingCreated?.();
+            }, 3000)
             break;
           case 'project':
-            onProjectCreated?.();
+            setTimeout(() => {
+              onProjectCreated?.();
+            }, 3000)
             break;
           case 'department':
             onDepartmentCreated?.();

@@ -2,7 +2,7 @@ import AppHeader from "../AppHeader/AppHeader";
 import '@styles/styles.css'
 import TaskInfo from "../TaskInfo/TaskInfo";
 import SideBar from "../SideBar/SideBar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CalendarItem, Department, Employee, Meeting, ProjectItem, ReleaseItem, Status, TaskItem } from "@types";
 import EmployeeInfo from "../EmployeeInfo/EmployeeInfo";
 import Calendar from "../Calendar/Calendar";
@@ -27,6 +27,8 @@ const MainPage = () => {
 	const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [updating, setUpdating] = useState(false);
+
+	const [highlightedMeetingId, setHighlightedMeetingId] = useState<number | null>(null);
 
 	const updateTaskInList = (taskId: number, updates: Partial<TaskItem>) => {
 		setReleasesData(prevReleases => {
@@ -118,30 +120,76 @@ const MainPage = () => {
 		loadInitialData();
 	}, [today]);
 
+	const handleNotificationClick = useCallback((type: 'meeting' | 'task', id: number) => {
+		if (type === 'meeting') {
+			setShowCalendarEvents(true);
+			setSelectedTask(null);
+			setSelectedEmployee(null);
+			setHighlightedMeetingId(id);
+		} else if (type === 'task') {
+			loadTaskById(id);
+			setShowCalendarEvents(false);
+			setSelectedEmployee(null);
+		}
+	}, []);
+
+	const loadTaskById = async (id: number) => {
+		try {
+			setTaskInfoLoading(true);
+			const taskResponse = await tasksAPI.getTasksById(id);
+			if (taskResponse) {
+				setSelectedTask(taskResponse);
+			}
+		} catch (error) {
+			console.error('Error loading task:', error);
+		} finally {
+			setTaskInfoLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		if (highlightedMeetingId && showCalendarEvents) {
+			setTimeout(() => {
+				const element = document.getElementById(`meeting-${highlightedMeetingId}`);
+				if (element) {
+					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					setTimeout(() => {
+						element.classList.remove('highlighted');
+					}, 2000);
+				}
+			}, 100);
+		}
+	}, [highlightedMeetingId, showCalendarEvents]);
+
 	const handleTaskSelect = (task: TaskItem) => {
 		setSelectedTask(task);
 		setSelectedEmployee(null);
 		setShowCalendarEvents(false);
+		setHighlightedMeetingId(null);
 	};
 
 	const handleEmployeeSelect = (employee: Employee) => {
 		setSelectedEmployee(employee);
 		setSelectedTask(null);
 		setShowCalendarEvents(false);
+		setHighlightedMeetingId(null);
 	};
 
 	const handleCalendarClick = () => {
 		setShowCalendarEvents(prev => !prev);
 		setSelectedTask(null);
 		setSelectedEmployee(null);
+		setHighlightedMeetingId(null);
 	};
 
+
 	const handleTaskUpdate = (selectedTask: TaskItem, mode: string) => {
-		if (mode !== 'comment') {
-			refreshTasks();
+		if (mode === 'delete') {
+			refreshTasks(true);
 		}
 		if (mode === 'edit' || mode === 'comment') {
 			refreshSelectedTask(selectedTask.id);
+			refreshTasks(false);
 		} else {
 			setSelectedTask(null);
 		}
@@ -182,9 +230,10 @@ const MainPage = () => {
 
 	};
 
-	const refreshTasks = async () => {
+	const refreshTasks = async (setUpdate: boolean) => {
 		try {
-			setUpdating(true);
+			if (setUpdate)
+				setUpdating(true);
 			const newReleases = await releasesAPI.getReleases();
 			setReleasesData(newReleases);
 		} catch (error) {
@@ -195,7 +244,7 @@ const MainPage = () => {
 	};
 
 	const refreshProjects = async () => {
-		refreshTasks();
+		refreshTasks(true);
 		try {
 			const newProjects = await projectsAPI.getProjects();
 			setProjectsData(newProjects);
@@ -205,7 +254,7 @@ const MainPage = () => {
 	}
 
 	const refreshMeetings = async () => {
-		refreshTasks();
+		refreshTasks(false);
 		try {
 			const newMeetings = await meetingsAPI.getMeetings();
 			setMeetingsData(newMeetings);
@@ -251,6 +300,7 @@ const MainPage = () => {
 				userRole={currentUserRole}
 				onCalendarClick={handleCalendarClick}
 				isCalendarActive={showCalendarEvents}
+				onNotificationClick={handleNotificationClick}
 			/>
 			<div className="container-row">
 				<SideBar
@@ -303,6 +353,7 @@ const MainPage = () => {
 						currentUser={currentUserId}
 						employeeCalendar={calendarData}
 						meetings={meetengsData}
+						highlightedMeetingId={highlightedMeetingId}
 					/>
 				) : (
 					<div style={{ flex: 1, padding: 0, margin: 0 }}>

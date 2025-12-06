@@ -281,3 +281,21 @@ export const departmentsAPI = {
     return response;
   },
 };
+
+export const notificationsAPI = {
+  getMyNotifications: async () => {
+    const response = await fetch(`${URL}/notifications/my/`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return response;
+  },
+
+  readNotifications: async (id: number) => {
+    const response = await fetch(`${URL}/notifications/read/?id=${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+    });
+    return response;
+  }
+}

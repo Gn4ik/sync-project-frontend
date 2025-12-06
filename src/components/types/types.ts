@@ -215,6 +215,16 @@ export type CalendarItem = {
   active_tasks?: Array<[string, string]>;
 }
 
+export type Notification = {
+  id: number;
+  title: string;
+  link: string;
+  is_read: boolean;
+  description: string;
+  reciever_id: number;
+  created_at: string;
+}
+
 export const statusMap: Record<string, TaskStatus> = {
   'К выполнению': 'to-execution',
   'В работе': 'on-work',

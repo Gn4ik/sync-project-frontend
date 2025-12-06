@@ -15,7 +15,7 @@ interface SideBarProps {
   onEmployeeSelect: (employee: Employee) => void;
   userRole: string | null;
   userId: number;
-  onTasksUpdate?: () => void;
+  onTasksUpdate?: (setUpdate: boolean) => void;
   onProjectsUpdate?: () => void;
   onMeetengsUpdate: () => void;
   onEmployeesUpdate: () => void;
@@ -153,7 +153,7 @@ const SideBar = ({
       if (response.ok) {
         setTimeout(() => {
           if (type === 'department') { onDepartmentsUpdate?.(); }
-          else { onTasksUpdate?.(); }
+          else { onTasksUpdate?.(true); }
         }, 3000)
         return true;
       } else {

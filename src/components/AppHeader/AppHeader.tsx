@@ -6,26 +6,130 @@ import { useEffect, useRef, useState } from 'react';
 import Popup from '../Popup/Popup';
 import './AppHeader.css'
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '@utils/api';
+import { authAPI, notificationsAPI } from '@utils/api';
+import { Notification } from '@components/types';
 
 interface AppHeaderProps {
   userRole?: string | null;
   onCalendarClick?: () => void;
   isCalendarActive?: boolean;
+  onNotificationClick?: (type: 'meeting' | 'task', id: number) => void;
 }
 
-const AppHeader = ({ userRole = 'executor', onCalendarClick, isCalendarActive = false }: AppHeaderProps) => {
+const AppHeader = ({
+  userRole = 'executor',
+  onCalendarClick,
+  isCalendarActive = false,
+  onNotificationClick
+}: AppHeaderProps) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const popupRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const navigate = useNavigate();
 
-  const toggleNotifications = () => {
+  const loadNotifications = async () => {
+    try {
+      const response = await notificationsAPI.getMyNotifications();
+      if (response.ok) {
+        const data = await response.json();
+        const sortedNotifications = data.sort((a: Notification, b: Notification) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
+        setNotifications(sortedNotifications);
+
+        const unread = data.filter((notification: Notification) => !notification.is_read).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  const markAsRead = async (id: number) => {
+    try {
+      const response = await notificationsAPI.readNotifications(id);
+      if (response.ok) {
+        setNotifications(prev =>
+          prev.map(notification =>
+            notification.id === id
+              ? { ...notification, is_read: true }
+              : notification
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.is_read) {
+      markAsRead(notification.id);
+    }
+
+    const url = new URL(notification.link, window.location.origin);
+    const path = url.pathname;
+    const params = new URLSearchParams(url.search);
+
+    if (path.includes('/meetings/get_by_id/')) {
+      const meetingId = params.get('id');
+      if (meetingId && onNotificationClick) {
+        onNotificationClick('meeting', parseInt(meetingId));
+      }
+    } else if (path.includes('/tasks/get_by_id/')) {
+      const taskId = params.get('id');
+      if (taskId && onNotificationClick) {
+        onNotificationClick('task', parseInt(taskId));
+      }
+    } else if (notification.link.startsWith('/')) {
+      navigate(notification.link);
+    } else {
+      window.open(notification.link, '_blank');
+    }
+
+    closePopup();
+  };
+
+  const formatNotificationDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} мин. назад`;
+    } else if (diffHours < 24) {
+      return `${diffHours} ч. назад`;
+    } else if (diffDays === 1) {
+      return 'Вчера';
+    } else if (diffDays < 7) {
+      return `${diffDays} дн. назад`;
+    } else {
+      return date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
+
+  const toggleNotifications = async () => {
     const newState = !isPopupOpen;
     setIsPopupOpen(newState);
     setButtonActive(newState);
+
+    if (newState) {
+      await loadNotifications();
+    }
   }
 
   const closePopup = () => {
@@ -45,6 +149,18 @@ const AppHeader = ({ userRole = 'executor', onCalendarClick, isCalendarActive = 
     navigate('/login');
     window.location.reload();
   }
+
+  useEffect(() => {
+    loadNotifications();
+    const intervalId = setInterval(() => {
+      if (!isPopupOpen) {
+        loadNotifications();
+      }
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [isPopupOpen]);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -92,6 +208,11 @@ const AppHeader = ({ userRole = 'executor', onCalendarClick, isCalendarActive = 
         <div className="notifications-wrapper">
           <button ref={buttonRef} className='icon-button button' onClick={toggleNotifications} aria-label='Уведомления'>
             <img src={buttonActive ? ringLogoActive : ringLogo} />
+            {unreadCount > 0 && (
+              <span className="notification-badge">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
           <Popup
             isOpen={isPopupOpen}
@@ -102,9 +223,29 @@ const AppHeader = ({ userRole = 'executor', onCalendarClick, isCalendarActive = 
             <div className="popup-content-header">
               <h3>Уведомления</h3>
               <div className="notifications-list">
-                <div className="notification-item">Новое уведомление 1</div>
-                <div className="notification-item">Новое уведомление 2</div>
-                <div className="notification-item">Новое уведомление 3</div>
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`notification-item ${!notification.is_read ? 'notification-unread' : ''}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="notification-header">
+                        <div className="notification-title">{notification.title}</div>
+                        <div className="notification-time">
+                          {formatNotificationDate(notification.created_at)}
+                        </div>
+                      </div>
+                      <div className="notification-description">
+                        {notification.description}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="notification-empty">
+                    У вас нет уведомлений
+                  </div>
+                )}
               </div>
             </div>
           </Popup>
