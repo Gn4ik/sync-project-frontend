@@ -161,6 +161,7 @@ export interface Employee {
   employee_meetengs: null;
   schedule: Schedule;
   employee_departments: EmployeeDepartment[];
+  vacations?: Vacation[];
 }
 
 export type ListNode = {
@@ -196,6 +197,13 @@ export type CreateTaskModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (taskData: TaskFormData) => void;
+}
+
+export type Vacation = {
+  id: number;
+  end_day: string;
+  employee_id: number;
+  start_day: string;
 }
 
 export type TaskFormData = {

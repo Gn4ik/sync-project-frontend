@@ -272,3 +272,17 @@
 .calendar-wrapper {
   height: 295px;
 }
+
+.status-vacation {
+  color: #666;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-vacation::before {
+  content: "🏖️";
+  margin-right: 5px;
+}

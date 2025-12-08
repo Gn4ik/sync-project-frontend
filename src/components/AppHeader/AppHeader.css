@@ -232,3 +232,26 @@
 .notification-item:not(.notification-unread) {
   opacity: 0.8;
 }
+
+.backup-button {
+  width: 180px;
+  height: 32px;
+  opacity: 1;
+  border-radius: 10px;
+  background: #0B57D0;
+  border: none;
+  box-shadow: 4px 4px 4px 0px #00000040;
+}
+
+.backup-button:hover {
+  cursor: pointer;
+  background: #084ebe;
+  transition: ease-in-out;
+}
+
+.backup-button-text {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 140%;
+  color: #FAFBFC;
+}

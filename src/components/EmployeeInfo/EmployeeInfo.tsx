@@ -32,9 +32,28 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
 
   const [isAdminPopupOpen, setIsAdminPopupOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно'>('Неизвестно');
+  const [currentStatus, setCurrentStatus] = useState<'На работе' | 'Отсутствует' | 'Обед' | 'В отпуске' | 'Неизвестно'>('Неизвестно');
   const adminButtonRef = useRef<HTMLButtonElement>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+
+  const isEmployeeOnVacation = (date: Date = new Date()): boolean => {
+    if (!selectedEmployee?.vacations || selectedEmployee.vacations.length === 0) {
+      return false;
+    }
+
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+
+    return selectedEmployee.vacations.some(vacation => {
+      const startDate = new Date(vacation.start_day);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(vacation.end_day);
+      endDate.setHours(0, 0, 0, 0);
+
+      return targetDate >= startDate && targetDate <= endDate;
+    });
+  };
 
   useEffect(() => {
     const loadSchedules = async () => {
@@ -65,7 +84,11 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
     return days[today];
   };
 
-  const getCurrentStatus = (): 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно' => {
+  const getCurrentStatus = (): 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно' | 'В отпуске' => {
+    if (isEmployeeOnVacation()) {
+      return 'В отпуске';
+    }
+
     if (!selectedEmployee?.schedule) return 'Неизвестно';
 
     const schedule = selectedEmployee.schedule;
@@ -252,9 +275,33 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
         return 'status-lunch';
       case 'Отсутствует':
         return 'status-absent';
+      case 'В отпуске':
+        return 'status-vacation';
       default:
         return 'status-unknown';
     }
+  };
+
+  const getVacationDays = (): Date[] => {
+    const vacationDays: Date[] = [];
+
+    if (!selectedEmployee?.vacations) {
+      return vacationDays;
+    }
+
+    selectedEmployee.vacations.forEach(vacation => {
+      const startDate = new Date(vacation.start_day);
+      const endDate = new Date(vacation.end_day);
+
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        vacationDays.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    });
+
+    return vacationDays;
   };
 
   return (
@@ -277,6 +324,7 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
       onSubmit={handleSubmit}
       onCloseEditModal={handleCloseEditModal}
       employeeDepartment={getEmployeeDepartment}
+      vacationDays={getVacationDays()}
     />
   );
 };

@@ -20,7 +20,7 @@ interface ScheduleDay {
 interface EmployeeInfoUIProps {
   selectedEmployee: Employee | null;
   userRole: string | null;
-  currentStatus: 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно';
+  currentStatus: 'На работе' | 'Отсутствует' | 'Обед' | 'Неизвестно' | 'В отпуске';
   employeeSchedule: ScheduleDay[];
   currentDayIndex: number;
   isAdminPopupOpen: boolean;
@@ -36,6 +36,7 @@ interface EmployeeInfoUIProps {
   onSubmit: (formData: any) => Promise<boolean>;
   onCloseEditModal: () => void;
   employeeDepartment: () => string;
+  vacationDays: Date[];
 }
 
 const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
@@ -56,7 +57,8 @@ const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
   onEditEmployee,
   onSubmit,
   onCloseEditModal,
-  employeeDepartment
+  employeeDepartment,
+  vacationDays
 }) => {
   if (!selectedEmployee) {
     return (
@@ -158,7 +160,10 @@ const EmployeeInfoUI: React.FC<EmployeeInfoUIProps> = ({
               </div>
             </div>
             <div className="calendar-wrapper">
-              <Calendar status='to-execution' />
+              <Calendar
+                status='to-execution'
+                vacationDays={vacationDays}
+              />
             </div>
           </div>
 

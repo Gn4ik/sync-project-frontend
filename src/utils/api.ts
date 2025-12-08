@@ -299,3 +299,11 @@ export const notificationsAPI = {
     return response;
   }
 }
+
+export const dbDump = async () => {
+  const response = await fetch(`${URL}/admin/db_dump/?compress=True&include_data=True`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return response;
+}

@@ -18,6 +18,7 @@ interface CalendarProps {
   employeeCalendar?: CalendarItem[];
   meetings?: Meeting[];
   currentUserId?: number;
+  vacationDays?: Date[];
 }
 
 const Calendar: React.FC<CalendarProps> = ({
@@ -26,7 +27,8 @@ const Calendar: React.FC<CalendarProps> = ({
   task,
   employeeCalendar = [],
   meetings = [],
-  currentUserId
+  currentUserId,
+  vacationDays = []
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -179,6 +181,20 @@ const Calendar: React.FC<CalendarProps> = ({
     );
   };
 
+  const isVacationDay = (day: number, isCurrentMonth: boolean = true): boolean => {
+    if (!isCurrentMonth || vacationDays.length === 0) return false;
+
+    const dateToCheck = new Date(year, month, day);
+    dateToCheck.setHours(0, 0, 0, 0);
+
+    return vacationDays.some(vacationDay => {
+      const normalizedVacationDay = new Date(vacationDay);
+      normalizedVacationDay.setHours(0, 0, 0, 0);
+
+      return normalizedVacationDay.getTime() === dateToCheck.getTime();
+    });
+  };
+
   const getStatusClass = () => {
     if (!task?.status?.alias) return '';
 
@@ -301,6 +317,7 @@ const Calendar: React.FC<CalendarProps> = ({
         {calendarDays.map(({ day, isCurrentMonth, isPreviousMonth, isNextMonth }, index) => {
           const dayEvents = getEventsForDay(day, isCurrentMonth);
           const isOtherMonth = isPreviousMonth || isNextMonth;
+          const vacationDay = isVacationDay(day, isCurrentMonth);
 
           const isDeadlineDay = task?.end_date && isCurrentMonth;
           let isDeadline = false;
@@ -322,14 +339,20 @@ const Calendar: React.FC<CalendarProps> = ({
             <div
               key={`${isCurrentMonth ? 'current' : 'other'}-${day}-${index}`}
               className={`calendar-day  
-                ${isToday(day, isCurrentMonth) ? 'today' : ''} 
-                ${isDeadline ? `calendar-day-deadline ${getStatusClass()}` : ''}
-                ${dayEvents.length > 0 ? 'has-events' : ''}
-                ${isOtherMonth ? 'other-month' : ''}
-              `}
+            ${isToday(day, isCurrentMonth) ? 'today' : ''} 
+            ${isDeadline ? `calendar-day-deadline ${getStatusClass()}` : ''}
+            ${dayEvents.length > 0 ? 'has-events' : ''}
+            ${isOtherMonth ? 'other-month' : ''}
+            ${vacationDay ? 'vacation-day' : ''}
+          `}
             >
-              <span className={isDeadline ? 'day-number-deadline' : 'day-number'}>{day}</span>
+              <span className={`${isDeadline ? 'day-number-deadline' : 'day-number'} ${vacationDay ? 'vacation-day-number' : ''}`}>
+                {day}
+              </span>
               {renderTooltip(dayEvents)}
+              {vacationDay && (
+                <div className="vacation-indicator" title="День отпуска" />
+              )}
             </div>
           );
         })}

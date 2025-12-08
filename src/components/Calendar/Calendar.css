@@ -9,8 +9,6 @@
   max-height: 295px;
   box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
   z-index: 500;
-  /* margin-top: 40px;
-  margin-right: 20px; */
 }
 
 .relative {
@@ -165,17 +163,6 @@
   border: 2px solid #0B57D0;
 }
 
-/* .calendar-day.has-events::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 6px;
-  height: 6px;
-  background: #0B57D0;
-  border-radius: 50%;
-} */
-
 .day-number {
   font-size: 14px;
   font-weight: 500;
@@ -256,6 +243,38 @@
 
 .prev-button {
   rotate: 180deg;
+}
+
+.calendar-day.vacation-day {
+  background-color: #f5f5f5 !important;
+  position: relative;
+}
+
+.calendar-day.vacation-day .day-number {
+  color: #888 !important;
+}
+
+.vacation-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.vacation-indicator svg {
+  width: 12px;
+  height: 12px;
+}
+
+.status-vacation {
+  color: #888;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
 }
 
 @media (max-width: 768px) {
