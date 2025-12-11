@@ -91,7 +91,14 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ui": "jest --watchAll"
+    "test:ui": "jest --watchAll",
+    "docker:build": "docker build -t sync-project-frontend .",
+    "docker:run": "docker run -p 3000:80 sync-project-frontend",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:prod": "docker-compose up",
+    "docker:stop": "docker-compose down",
+    "docker:clean": "docker system prune -af",
+    "docker:logs": "docker-compose logs -f"
   },
   "eslintConfig": {
     "extends": [

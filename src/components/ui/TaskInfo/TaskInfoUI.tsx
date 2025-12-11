@@ -75,6 +75,8 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   onFileDownload,
   onCommentSubmit
 }) => {
+  const [displayStatus, setDisplayStatus] = useState<string>('');
+  const [commentText, setCommentText] = useState<string>('');
 
   if (!selectedTask) {
     return (
@@ -85,10 +87,7 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
       </div>
     );
   }
-
-  const [displayStatus, setDisplayStatus] = useState<string>('');
   const allowedUser = userId === selectedTask.executor_id || userRole === 'manager';
-  const [commentText, setCommentText] = useState<string>('');
 
   useEffect(() => {
     if (selectedTask && selectedTask.status) {
