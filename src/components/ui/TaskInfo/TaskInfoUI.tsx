@@ -78,6 +78,12 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
   const [displayStatus, setDisplayStatus] = useState<string>('');
   const [commentText, setCommentText] = useState<string>('');
 
+  useEffect(() => {
+    if (selectedTask && selectedTask.status) {
+      setDisplayStatus(selectedTask.status.alias);
+    }
+  }, [selectedTask]);
+
   if (!selectedTask) {
     return (
       <div className="task-info-container" data-testid="task-info-ui">
@@ -88,12 +94,6 @@ const TaskInfoUI: React.FC<TaskInfoUIProps> = ({
     );
   }
   const allowedUser = userId === selectedTask.executor_id || userRole === 'manager';
-
-  useEffect(() => {
-    if (selectedTask && selectedTask.status) {
-      setDisplayStatus(selectedTask.status.alias);
-    }
-  }, [selectedTask]);
 
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
