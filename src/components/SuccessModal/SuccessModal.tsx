@@ -16,12 +16,13 @@ export const SuccessModal = ({ message, isOpen, handleSuccessClose }: SuccessMod
       title="Успех!"
       submitButtonText="OK"
       showCancelButton={false}
+      data-testid="success-modal"
     >
-      <div className="success-modal-content">
-        <div className="success-modal-icon">
+      <div className="success-modal-content" data-testid="success-modal-content">
+        <div className="success-modal-icon" data-testid="success-modal-icon">
           ✓
         </div>
-        <p className="success-modal-message">
+        <p className="success-modal-message" data-testid="success-modal-message">
           {message()}
         </p>
       </div>

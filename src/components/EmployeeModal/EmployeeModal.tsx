@@ -201,8 +201,28 @@ export const EmployeeModal = ({
 
     const nameParts = formData.fullName.trim().split(/\s+/);
 
-    if (nameParts.length < 2) {
-      alert('Введите фамилию и имя через пробел');
+    const phoneRegex = /^\+7\d{10}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!?.(){}[\]\\/|<>*~`_+-]).{8,}$/;
+
+    const birthDate = new Date(formData.birthDate);
+    const now = new Date();
+    const age = now.getFullYear() - birthDate.getFullYear();
+    const monthDiff = now.getMonth() - birthDate.getMonth();
+    const dayDiff = now.getDate() - birthDate.getDate();
+
+    const isAdult =
+      age > 18 ||
+      (age === 18 && (monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0)));
+
+    if (!isAdult) {
+      alert('Сотруднику должно быть не менее 18 лет');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (nameParts.length < 3) {
+      alert('Введите ФИО через пробел');
       setIsSubmitting(false);
       return;
     }
@@ -219,17 +239,37 @@ export const EmployeeModal = ({
       return;
     }
 
-    const departmentsWithOffices = formData.selectedDepartments.map(id => {
+    if (mode === 'create' && !passwordRegex.test(formData.password)) {
+      alert('Пароль должен быть не менее 8 символов, содержать верхний и нижний регистр, число и спецсимвол');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.email.endsWith('@syncproj.ru')) {
+      alert('Email должен оканчиваться на @syncproj.ru');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!phoneRegex.test(formData.phone)) {
+      alert('Телефон должен быть формата +7XXXXXXXXXX и содержать 10 цифр после 7');
+      setIsSubmitting(false);
+      return;
+    }
+
+    for (const id of formData.selectedDepartments) {
       const office = formData.departmentOffices[id] || '';
       if (!office.trim()) {
         alert(`Заполните офис для отдела #${id}`);
-        throw new Error(`Office missing for department ${id}`);
+        setIsSubmitting(false);
+        return;
       }
-      return {
-        id: id,
-        office: office
-      };
-    });
+    }
+
+    const departmentsWithOffices = formData.selectedDepartments.map(id => ({
+      id: id,
+      office: formData.departmentOffices[id] || ''
+    }));
 
     const apiFormData: any = {
       lname: nameParts[0],
@@ -293,9 +333,12 @@ export const EmployeeModal = ({
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
     >
       <div className="form-section">
+
         <div className="form-group">
-          <label className="form-label">ФИО:</label>
+          <label className="form-label" htmlFor="fullName">ФИО:</label>
           <input
+            id="fullName"
+            data-testid="fullName"
             type="text"
             className="form-input form-text"
             placeholder="Введите ФИО сотрудника"
@@ -307,8 +350,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Роль:</label>
+          <label className="form-label" htmlFor="role">Роль:</label>
           <select
+            id="role"
             className="form-select form-text"
             value={formData.role}
             onChange={(e) => handleChange('role', e.target.value)}
@@ -322,8 +366,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Должность:</label>
+          <label className="form-label" htmlFor="position">Должность:</label>
           <input
+            id="position"
             type="text"
             className="form-input form-text"
             placeholder="Введите должность"
@@ -335,8 +380,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Расписание:</label>
+          <label className="form-label" htmlFor="scheduleId">Расписание:</label>
           <select
+            id="scheduleId"
             className="form-select form-text"
             value={formData.scheduleId}
             onChange={(e) => handleChange('scheduleId', parseInt(e.target.value))}
@@ -353,8 +399,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Дата рождения:</label>
+          <label className="form-label" htmlFor="birthDate">Дата рождения:</label>
           <input
+            id="birthDate"
             type="date"
             className="form-input form-text"
             value={formData.birthDate}
@@ -365,8 +412,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Контактный телефон:</label>
+          <label className="form-label" htmlFor="phone">Контактный телефон:</label>
           <input
+            id="phone"
             type="tel"
             className="form-input form-text"
             placeholder="+79051534857"
@@ -378,8 +426,9 @@ export const EmployeeModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Электронная почта:</label>
+          <label className="form-label" htmlFor="email">Электронная почта:</label>
           <input
+            id="email"
             type="email"
             className="form-input form-text"
             placeholder="user@example.com"
@@ -392,8 +441,9 @@ export const EmployeeModal = ({
 
         {mode === 'create' && (
           <div className="form-group">
-            <label className="form-label">Пароль:</label>
+            <label className="form-label" htmlFor="password">Пароль:</label>
             <input
+              id="password"
               type="password"
               className="form-input form-text"
               placeholder="Введите пароль"
@@ -408,7 +458,7 @@ export const EmployeeModal = ({
 
       <div className="form-group-fullwidth">
         <div className="departments-header">
-          <label className="form-label">Отделы:</label>
+          <label className="form-label" htmlFor="departments">Отделы:</label>
           <button
             type="button"
             className="btn-select-all"
@@ -421,7 +471,7 @@ export const EmployeeModal = ({
           </button>
         </div>
 
-        <div className="departments-list">
+        <div id="departments" className="departments-list">
           {departments.map(department => {
             const isSelected = formData.selectedDepartments.includes(department.id);
             const office = formData.departmentOffices[department.id] || '';
@@ -444,6 +494,8 @@ export const EmployeeModal = ({
                 {isSelected && (
                   <div className="department-office-input">
                     <input
+                      id={`office-${department.id}`}
+                      data-testid={`office-input-${department.id}`}
                       type="text"
                       className="form-input form-text office-input"
                       placeholder="Введите офис (например: Каб. 417)"
@@ -460,9 +512,7 @@ export const EmployeeModal = ({
         </div>
 
         {formData.selectedDepartments.length === 0 && (
-          <div className="form-hint">
-            Выберите хотя бы один отдел
-          </div>
+          <div className="form-hint">Выберите хотя бы один отдел</div>
         )}
       </div>
     </Modal>

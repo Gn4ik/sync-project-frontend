@@ -110,7 +110,7 @@ export const TaskModal = ({
         project_id: parseInt(formData.project) || 0,
         executor_id: parseInt(formData.assignee) || 0
       };
-      success= await onSubmit(taskData, 'task');
+      success = await onSubmit(taskData, 'task');
     } else if (mode === 'create') {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.title);
@@ -199,9 +199,9 @@ export const TaskModal = ({
       title={title}
       submitButtonText={mode === 'edit' ? 'Сохранить' : 'Добавить'}
     >
-      <div className="form-section">
+      <div className="form-section" data-testid="task-modal-form">
         <div className="form-group">
-          <label className="form-label">Название:</label>
+          <label className="form-label" data-testid="title-label">Название:</label>
           <input
             type="text"
             className="form-input form-text"
@@ -209,16 +209,18 @@ export const TaskModal = ({
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             required
+            data-testid="task-title-input"
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Проект:</label>
+          <label className="form-label" data-testid="project-label">Проект:</label>
           <select
             className="form-select form-text"
             value={formData.project}
             onChange={(e) => handleChange('project', e.target.value)}
             required
+            data-testid="project-select"
           >
             <option value="" disabled hidden>Выберите проект</option>
             {projects.map(project => (
@@ -230,12 +232,13 @@ export const TaskModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Исполнитель:</label>
+          <label className="form-label" data-testid="assignee-label">Исполнитель:</label>
           <select
             className="form-select form-text"
             value={formData.assignee}
             onChange={(e) => handleChange('assignee', e.target.value)}
             required
+            data-testid="assignee-select"
           >
             <option value="" disabled hidden className='form-text'>Выберите исполнителя</option>
             {employees.map(employee => (
@@ -247,35 +250,38 @@ export const TaskModal = ({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Срок:</label>
+          <label className="form-label" data-testid="deadline-label">Срок:</label>
           <input
             type="date"
             className="form-input form-text"
             value={formData.end_date}
             onChange={(e) => handleChange('end_date', e.target.value)}
             required
+            data-testid="deadline-input"
           />
         </div>
       </div>
 
       <div className="form-group-description">
-        <label className="form-label description-label">Описание:</label>
+        <label className="form-label description-label" data-testid="description-label">Описание:</label>
         <textarea
           className="form-textarea form-text"
           placeholder="Введите описание"
           rows={3}
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
+          data-testid="description-textarea"
         />
 
         {mode === 'create' && (
-          <div className="file-upload-section">
-            <label className="form-label description-label">Файлы:</label>
+          <div className="file-upload-section" data-testid="file-upload-section">
+            <label className="form-label description-label" data-testid="files-label">Файлы:</label>
             <div className="file-upload-area">
               <button
                 type="button"
                 className="file-upload-button"
                 onClick={triggerFileInput}
+                data-testid="file-upload-button"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8 1V15M1 8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -288,18 +294,20 @@ export const TaskModal = ({
                 multiple
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
+                data-testid="file-input"
               />
             </div>
 
             {files.length > 0 && (
-              <div className="file-list">
+              <div className="file-list" data-testid="file-list">
                 {files.map((file, index) => (
-                  <div key={index} className="file-item">
+                  <div key={index} className="file-item" data-testid={`file-item-${index}`}>
                     <span className="file-name">{file.name}</span>
                     <button
                       type="button"
                       className="file-remove-button"
                       onClick={() => handleRemoveFile(index)}
+                      data-testid={`remove-file-${index}`}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

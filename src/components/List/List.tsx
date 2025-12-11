@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './List.css';
 import { Employee, ListNode, ListProps } from '@types';
-import '../../styles/styles';
+import '@styles/styles.css';
 
 const initializeItemExpansion = (item: ListNode, expanded: boolean): ListNode => {
   return {

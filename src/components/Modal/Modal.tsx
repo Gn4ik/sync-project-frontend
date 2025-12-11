@@ -59,15 +59,15 @@ export const Modal = ({
   };
 
   return (
-    <div className="modal-overlay" onPointerDown={handleOverlayClick}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" data-testid="modal-overlay" onPointerDown={handleOverlayClick}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} data-testid="modal-content">
         <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <h2 className="modal-title" data-testid="modal-title">{title}</h2>
+          <button className="modal-close" onClick={onClose} data-testid="modal-close-btn">×</button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className='form-wrapper'>
+        <form data-testid="modal-form" onSubmit={handleSubmit}>
+          <div className='form-wrapper' data-testid="modal-form-wrapper">
             {children}
           </div>
 
@@ -79,6 +79,7 @@ export const Modal = ({
                     type="button"
                     className="btn-secondary"
                     onClick={onClose}
+                    data-testid="modal-cancel-btn"
                   >
                     {cancelButtonText}
                   </button>
@@ -89,6 +90,7 @@ export const Modal = ({
                     type="button"
                     className={getButtonClass(additionalButton.variant)}
                     onClick={additionalButton.onClick}
+                    data-testid="modal-additional-btn"
                   >
                     {additionalButton.text}
                   </button>
@@ -97,6 +99,7 @@ export const Modal = ({
                 <button
                   type="submit"
                   className={getButtonClass(submitButtonVariant)}
+                  data-testid="modal-submit-btn"
                 >
                   {submitButtonText}
                 </button>

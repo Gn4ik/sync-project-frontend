@@ -286,14 +286,17 @@ const Calendar: React.FC<CalendarProps> = ({
   return (
     <div className={getStatusClass()
       ? `${calendarClass} ${calendarPosition || ''}`
-      : `${defaultCalendar}`}>
-      <div className="calendar-header">
-        <div className="calendar-navigation">
-          <h3>{getMonthYearString()}</h3>
+      : `${defaultCalendar}`}
+      data-testid="calendar"
+    >
+      <div className="calendar-header" data-testid="calendar-header">
+        <div className="calendar-navigation" data-testid="calendar-navigation">
+          <h3 data-testid="calendar-month-year">{getMonthYearString()}</h3>
           <button
             className="nav-button prev-button"
             onClick={goToPreviousMonth}
             aria-label="Предыдущий месяц"
+            data-testid="calendar-prev-button"
           >
             ❯
           </button>
@@ -301,15 +304,16 @@ const Calendar: React.FC<CalendarProps> = ({
             className="nav-button"
             onClick={goToNextMonth}
             aria-label="Следующий месяц"
+            data-testid="calendar-next-button"
           >
             ❯
           </button>
         </div>
       </div>
 
-      <div className="calendar-grid">
+      <div className="calendar-grid" data-testid="calendar-grid">
         {weekDays.map(day => (
-          <div key={day} className="calendar-weekday">
+          <div key={day} className="calendar-weekday" data-testid={`weekday-${day}`}>
             {day}
           </div>
         ))}
@@ -345,8 +349,10 @@ const Calendar: React.FC<CalendarProps> = ({
             ${isOtherMonth ? 'other-month' : ''}
             ${vacationDay ? 'vacation-day' : ''}
           `}
+              data-testid={`calendar-day-${day}-${isCurrentMonth ? 'current' : 'other'}`}
             >
-              <span className={`${isDeadline ? 'day-number-deadline' : 'day-number'} ${vacationDay ? 'vacation-day-number' : ''}`}>
+              <span className={`${isDeadline ? 'day-number-deadline' : 'day-number'} ${vacationDay ? 'vacation-day-number' : ''}`}
+                data-testid={`day-number-${day}`}>
                 {day}
               </span>
               {renderTooltip(dayEvents)}

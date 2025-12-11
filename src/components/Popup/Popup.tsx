@@ -34,7 +34,7 @@ const Popup = ({ isOpen, onClose, children, position = 'right', triggerRef }: Po
     if (!isOpen) return null;
 
     return (
-        <div ref={popupRef} className={`popup ${position}`}>
+        <div ref={popupRef} className={`popup ${position}`} data-testid="popup-content">
             {children}
         </div>
     );
