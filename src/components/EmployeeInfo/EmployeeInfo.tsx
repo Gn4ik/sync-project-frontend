@@ -293,7 +293,7 @@ const EmployeeInfo = ({ selectedEmployee, userRole, onEmployeeEdit, onEmployeeUp
       const startDate = new Date(vacation.start_day);
       const endDate = new Date(vacation.end_day);
 
-      let currentDate = new Date(startDate);
+      const currentDate = new Date(startDate);
 
       while (currentDate <= endDate) {
         vacationDays.push(new Date(currentDate));
